@@ -1,10 +1,15 @@
 {
 	"name": "crystal-ameba",
 	"displayName": "crystal-ameba",
+	"publisher": "veelenga",
 	"description": "Ameba extension for Visual Studio Code",
 	"version": "0.0.1",
 	"engines": {
 		"vscode": "^1.31.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/veelenga/vscode-crystal-ameba.git"
 	},
 	"categories": [
 		"Programming Languages",
