@@ -16,12 +16,13 @@ function getCurrentPath(fileName: string): string {
     return vscode.workspace.rootPath || path.dirname(fileName);
 }
 
-function getCommandArguments(fileName: string): string[] {
+function getCommandArguments(fileName: string, rootPath: string): string[] {
     let commandArguments = [fileName, '--format', 'json'];
     const extensionConfig = getConfig();
-    if (extensionConfig.configFilePath !== '') {
-        if (fs.existsSync(extensionConfig.configFilePath)) {
-            const config = ['--config', extensionConfig.configFilePath];
+    if (extensionConfig.configFileName !== '') {
+        let configPath = `${rootPath}/${extensionConfig.configFileName}`;
+        if (fs.existsSync(configPath)) {
+            const config = ['--config', configPath];
             commandArguments = commandArguments.concat(config);
         }
     }
@@ -90,7 +91,7 @@ export class Ameba {
             this.diag.set(entries);
         };
 
-        const args = getCommandArguments(fileName);
+        const args = getCommandArguments(fileName, currentPath);
 
         let task = new Task(uri, token => {
             let process = this.executeAmeba(args, document.getText(), {}, (error, stdout, stderr) => {

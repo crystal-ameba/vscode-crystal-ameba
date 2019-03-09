@@ -2,7 +2,7 @@ import { Ameba } from './ameba';
 
 export interface AmebaConfig {
     command: string;
-    configFilePath: string;
+    configFileName: string;
     onSave: boolean;
 }
 
@@ -13,7 +13,7 @@ export const onDidChangeConfiguration: (ameba: Ameba) => () => void = (ameba) =>
 export const getConfig: () => AmebaConfig = () => {
     return {
         command: 'ameba',
-        configFilePath: '.ameba.yml',
+        configFileName: '.ameba.yml',
         onSave: true
     };
 };
