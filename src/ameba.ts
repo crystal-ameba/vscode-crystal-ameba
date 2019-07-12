@@ -81,7 +81,7 @@ export class Ameba {
                         loc.line - 1, loc.column - 1,
                         end_loc.line - 1, end_loc.column - 1
                     );
-                    const sev = vscode.DiagnosticSeverity.Error;
+                    const sev = this.convertSeverity(issue.severity);
                     const message = `[${issue.rule_name}] ${issue.message}`;
                     const diagnostic = new vscode.Diagnostic(range, message, sev);
                     diagnostics.push(diagnostic);
@@ -107,6 +107,19 @@ export class Ameba {
             return () => process.kill();
         });
         this.taskQueue.enqueue(task);
+    }
+
+    private convertSeverity(severity: String) {
+        switch(severity) {
+            case "Error":
+                return vscode.DiagnosticSeverity.Error;
+            case "Warning":
+                return vscode.DiagnosticSeverity.Warning;
+            case "Refactoring":
+                return vscode.DiagnosticSeverity.Hint;
+            default:
+                return vscode.DiagnosticSeverity.Information;
+        }
     }
 
     public clear(document: vscode.TextDocument): void {

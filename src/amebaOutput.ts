@@ -15,6 +15,7 @@ export interface AmebaIssue {
     rule_name: string;
     location: AmebaLocation;
     end_location: AmebaLocation;
+    severity: string;
 }
 
 export interface AmebaFile {
