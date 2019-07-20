@@ -10,7 +10,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/veelenga/vscode-crystal-ameba.git"
+		"url": "https://github.com/crystal-ameba/vscode-crystal-ameba.git"
 	},
 	"categories": [
 		"Programming Languages",
