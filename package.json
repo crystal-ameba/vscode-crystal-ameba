@@ -1,54 +1,57 @@
 {
-	"name": "crystal-ameba",
-	"displayName": "crystal-ameba",
-	"publisher": "veelenga",
-	"description": "Ameba extension for Visual Studio Code",
-	"version": "0.0.4",
-	"license": "MIT",
-	"engines": {
-		"vscode": "^1.22.0"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/crystal-ameba/vscode-crystal-ameba.git"
-	},
-	"categories": [
-		"Programming Languages",
-		"Linters"
-	],
-	"activationEvents": [
-		"onLanguage:crystal",
-		"onCommand:crystal.ameba"
-	],
-	"main": "./out/extension.js",
-	"contributes": {
-		"languages": [
-			{
-				"id": "crystal",
-				"extensions": [
-					".cr"
-				]
-			}
-		],
-		"commands": [
-			{
-				"command": "crystal.ameba",
-				"title": "Crystal: lint by Ameba"
-			}
-		]
-	},
-	"scripts": {
-		"vscode:prepublish": "yarn run compile",
-		"compile": "tsc -p ./",
-		"watch": "tsc -watch -p ./",
-		"postinstall": "node ./node_modules/vscode/bin/install",
-		"test": "yarn run compile && node ./node_modules/vscode/bin/test"
-	},
-	"devDependencies": {
-		"@types/mocha": "^2.2.42",
-		"@types/node": "^10.12.21",
-		"tslint": "^5.12.1",
-		"typescript": "^3.3.1",
-		"vscode": "^1.1.28"
-	}
+  "name":        "crystal-ameba",
+  "displayName": "crystal-ameba",
+  "publisher":   "veelenga",
+  "description": "Ameba extension for Visual Studio Code",
+  "version":     "0.0.4",
+  "license":     "MIT",
+  "engines":     {
+    "vscode": "^1.22.0"
+  },
+  "repository": {
+    "type": "git",
+    "url":  "https://github.com/crystal-ameba/vscode-crystal-ameba.git"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "activationEvents": [
+    "onLanguage:crystal",
+    "onCommand:crystal.ameba"
+  ],
+  "main":        "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id":         "crystal",
+        "extensions": [
+          ".cr"
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "command": "crystal.ameba",
+        "title":   "Crystal: lint by Ameba"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "yarn run compile",
+    "compile":           "tsc -p ./",
+    "watch":             "tsc -watch -p ./",
+    "postinstall":       "node ./node_modules/vscode/bin/install",
+    "test":              "yarn run compile && node ./node_modules/vscode/bin/test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^2.2.42",
+    "@types/node":  "^10.12.21",
+    "tslint":       "^5.12.1",
+    "typescript":   "^3.3.1",
+    "vscode":       "^1.1.28"
+  },
+  "resolutions": {
+    "minimist": "0.2.1"
+  }
 }
