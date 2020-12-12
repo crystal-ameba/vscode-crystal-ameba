@@ -3,5 +3,6 @@ All notable changes to the "vscode-crystal-ameba" extension will be documented i
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## [Unreleased]
-- Initial release
+## [v0.0.5]
+
+- Use project's `bin/ameba` if it exists #7 (thanks @richarddewit)
