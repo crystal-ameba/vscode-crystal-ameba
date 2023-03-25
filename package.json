@@ -32,8 +32,16 @@
     ],
     "commands": [
       {
-        "command": "crystal.ameba",
-        "title":   "Crystal: lint by Ameba"
+        "command": "crystal.ameba.lint",
+        "title":   "Crystal Ameba: run lints"
+      },
+      {
+        "command": "crystal.ameba.restart",
+        "title": "Crystal Ameba: restart extension"
+      },
+      {
+        "command": "crystal.ameba.disable",
+        "title": "Crystal Ameba: disable lints (workspace)"
       }
     ]
   },
