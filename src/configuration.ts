@@ -1,6 +1,6 @@
-import * as vscode from 'vscode';
+import { workspace } from 'vscode';
 import * as path from 'path';
-import * as fs from 'fs';
+import { existsSync } from 'fs';
 
 export interface AmebaConfig {
     command: string;
@@ -8,17 +8,16 @@ export interface AmebaConfig {
     onSave: boolean;
 }
 
-export const getConfig: () => AmebaConfig = () => {
+export function getConfig(): AmebaConfig {
     let command = 'ameba';
-    const wsRoot = vscode.workspace.rootPath;
-    if (wsRoot) {
-        const localAmebaPath = path.join(wsRoot, 'bin', 'ameba');
-        if (fs.existsSync(localAmebaPath)) {
-            command = localAmebaPath;
-        }
+    const root = workspace.workspaceFolders || [];
+    if (root.length) {
+        const localAmebaPath = path.join(root[0].uri.fsPath, 'bin', 'ameba');
+        if (existsSync(localAmebaPath)) command = localAmebaPath;
     }
+
     return {
-        command: command,
+        command,
         configFileName: '.ameba.yml',
         onSave: true
     };
