@@ -1,6 +1,7 @@
 import { exec } from 'child_process';
 import * as path from 'path';
 import {
+    commands,
     Diagnostic,
     DiagnosticCollection,
     DiagnosticSeverity,
@@ -37,12 +38,16 @@ export class Ameba {
         }
 
         const task = new Task(document.uri, token => {
-            const proc = exec(args.join(' '), (err, stdout, stderr) => {
+            const proc = exec(args.join(' '), async (err, stdout, stderr) => {
                 if (token.isCanceled) return;
 
                 if (err && stderr.length) {
                     if ((process.platform == 'win32' && err.code === 1) || err.code === 127) {
-                        window.showErrorMessage(`Could not execute the Ameba file at: ${args[0]}`);
+                        const disable = await window.showErrorMessage(
+                            `Could not execute the Ameba file at: ${args[0]}`,
+                            'Disable (workspace)'
+                        );
+                        if (!!disable) await commands.executeCommand('crystal.ameba.disable');
                     } else {
                         window.showErrorMessage(stderr);
                     }
