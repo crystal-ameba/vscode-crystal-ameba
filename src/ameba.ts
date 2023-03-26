@@ -1,121 +1,98 @@
 import * as vscode from 'vscode';
 import * as cp from 'child_process';
 import * as path from 'path';
-import * as fs from 'fs';
-import { AmebaIssue, AmebaFile } from './amebaOutput';
 import { TaskQueue, Task } from './taskQueue';
 import { getConfig, AmebaConfig } from './configuration';
 import { AmebaOutput } from './amebaOutput';
-import { CpuInfo } from 'os';
-
-function isFileUri(uri: vscode.Uri): boolean {
-    return uri.scheme === 'file';
-}
-
-function getCurrentPath(fileName: string): string {
-    return vscode.workspace.rootPath || path.dirname(fileName);
-}
-
-function getCommandArguments(fileName: string, rootPath: string): string[] {
-    let commandArguments = [fileName, '--format', 'json'];
-    const extensionConfig = getConfig();
-    if (extensionConfig.configFileName !== '') {
-        let configPath = `${rootPath}/${extensionConfig.configFileName}`;
-        if (fs.existsSync(configPath)) {
-            const config = ['--config', configPath];
-            commandArguments = commandArguments.concat(config);
-        }
-    }
-
-    return commandArguments;
-}
 
 export class Ameba {
     private diag: vscode.DiagnosticCollection;
-    private taskQueue: TaskQueue = new TaskQueue();
+    private taskQueue: TaskQueue;
     public config: AmebaConfig;
 
-    constructor(
-        diagnostics: vscode.DiagnosticCollection,
-        additionalArguments: string[] = [],
-    ) {
+    constructor(diagnostics: vscode.DiagnosticCollection) {
         this.diag = diagnostics;
-        // this.additionalArguments = additionalArguments;
+        this.taskQueue = new TaskQueue();
         this.config = getConfig();
     }
 
-    public execute(document: vscode.TextDocument, onComplete?: () => void): void {
-        if (document.languageId !== 'crystal' || document.isUntitled || !isFileUri(document.uri)) {
+    public execute(document: vscode.TextDocument): void {
+        if (document.languageId !== 'crystal' || document.isUntitled || document.uri.scheme !== 'file') {
             return;
         }
 
-        const fileName = document.fileName;
-        const uri = document.uri;
-        let currentPath = getCurrentPath(fileName);
+        const args = [this.config.command, document.fileName, '--format', 'json'];
+        if (this.config.configFileName.length) {
+            const dir = vscode.workspace.getWorkspaceFolder(document.uri)!.uri.fsPath;
+            args.push('--config', path.join(dir, this.config.configFileName));
+        }
 
-        let onDidExec = (error: Error | null, stdout: string, stderr: string) => {
-            if (this.hasError(error, stderr)) {
-                return;
-            }
+        const task = new Task(document.uri, token => {
+            const proc = cp.exec(args.join(' '), (err, stdout, stderr) => {
+                if (token.isCanceled) return;
 
-            this.diag.delete(uri);
-            let ameba = this.parse(stdout);
-
-            if (ameba === undefined || ameba === null) {
-                return;
-            }
-
-            let entries: [vscode.Uri, vscode.Diagnostic[]][] = [];
-            ameba.sources.forEach((source: AmebaFile) => {
-                let diagnostics: Array<vscode.Diagnostic> = [];
-                source.issues.forEach((issue: AmebaIssue) => {
-                    const loc = issue.location;
-                    let end_loc = issue.end_location;
-                    if (end_loc === null || end_loc.line === null) {
-                        end_loc = {
-                            line: loc.line,
-                            column: loc.column
-                        };
+                if (err && stderr.length) {
+                    if ((process.platform == 'win32' && err.code === 1) || err.code === 127) {
+                        vscode.window.showErrorMessage(`Could not execute the Ameba file at: ${args[0]}`);
+                    } else {
+                        vscode.window.showErrorMessage(stderr);
                     }
-                    const range = new vscode.Range(
-                        loc.line - 1, loc.column - 1,
-                        end_loc.line - 1, end_loc.column - 1
-                    );
-                    const sev = this.convertSeverity(issue.severity);
-                    const message = `[${issue.rule_name}] ${issue.message}`;
-                    const diagnostic = new vscode.Diagnostic(range, message, sev);
-                    diagnostics.push(diagnostic);
-                });
-                entries.push([uri, diagnostics]);
-            });
-            this.diag.set(entries);
-        };
-
-        const args = getCommandArguments(fileName, currentPath);
-
-        let task = new Task(uri, token => {
-            let process = this.executeAmeba(args, document.getText(), {}, (error, stdout, stderr) => {
-                if (token.isCanceled) {
                     return;
                 }
-                onDidExec(error, stdout, stderr);
-                token.finished();
-                if (onComplete) {
-                    onComplete();
+
+                let results: AmebaOutput;
+                try {
+                    results = JSON.parse(stdout);
+                } catch (err) {
+                    console.error(`Ameba: failed parsing JSON: ${err}`);
+                    vscode.window.showErrorMessage('Ameba: failed to parse JSON response.');
+                    return;
                 }
+
+                if (!results.summary.issues_count) return;
+                const diagnostics: [vscode.Uri, vscode.Diagnostic[]][] = [];
+
+                for (let source of results.sources) {
+                    if (!source.issues.length) continue;
+                    let parsed: vscode.Diagnostic[] = [];
+
+                    source.issues.forEach(issue => {
+                        let start = issue.location;
+                        let end = issue.end_location;
+                        const range = new vscode.Range(
+                            start.line - 1,
+                            start.column - 1,
+                            end.line - 1,
+                            end.column
+                        );
+
+                        const diag = new vscode.Diagnostic(
+                            range,
+                            `[${issue.rule_name}] ${issue.message}`,
+                            this.parseSeverity(issue.severity)
+                        );
+                        parsed.push(diag);
+                    });
+
+                    diagnostics.push([document.uri, parsed]);
+                }
+
+                this.diag.set(diagnostics);
             });
-            return () => process.kill();
+
+            return () => proc.kill();
         });
+
         this.taskQueue.enqueue(task);
     }
 
-    private convertSeverity(severity: String) {
+    private parseSeverity(severity: string): vscode.DiagnosticSeverity {
         switch(severity) {
-            case "Error":
+            case 'Error':
                 return vscode.DiagnosticSeverity.Error;
-            case "Warning":
+            case 'Warning':
                 return vscode.DiagnosticSeverity.Warning;
-            case "Refactoring":
+            case 'Refactoring':
                 return vscode.DiagnosticSeverity.Hint;
             default:
                 return vscode.DiagnosticSeverity.Information;
@@ -124,61 +101,9 @@ export class Ameba {
 
     public clear(document: vscode.TextDocument): void {
         let uri = document.uri;
-        if (isFileUri(uri)) {
+        if (uri.scheme === 'file') {
             this.taskQueue.cancel(uri);
             this.diag.delete(uri);
         }
-    }
-
-    private executeAmeba(
-        args: string[],
-        fileContents: string,
-        options: cp.ExecFileOptions,
-        cb: (err: Error | null, stdout: string, stderr: string) => void): cp.ChildProcess {
-        let cmd = `${this.config.command} ${args.join(' ')}`;
-        let child = cp.exec(cmd, options, cb);
-        child.stdin.write(fileContents);
-        child.stdin.end();
-        return child;
-    }
-
-    // checking ameba output has error
-    private hasError(error: Error | null, stderr: string): boolean {
-        let errorOutput = stderr.toString();
-        if (error && (<any>error).code === 'ENOENT') {
-            console.error(error);
-            vscode.window.showWarningMessage(`${this.config.command} is not executable`);
-            return true;
-        } else if (error && (<any>error).code === 127) {
-            vscode.window.showWarningMessage(stderr);
-            return true;
-        } else if (errorOutput.length > 0) {
-            vscode.window.showErrorMessage(stderr);
-            return true;
-        }
-
-        return false;
-    }
-
-    private parse(output: string): AmebaOutput | null {
-        if (output.length < 1) {
-            let message = `command ${this.config.command} returns empty output!`;
-            vscode.window.showWarningMessage(message);
-
-            return null;
-        }
-
-        try {
-            return JSON.parse(output);
-        } catch(e) {
-            if (e instanceof SyntaxError) {
-                let errorMessage = `Error on parsing output (It might non-JSON output) : "${output}"`;
-                vscode.window.showWarningMessage(errorMessage);
-
-                return null;
-            }
-        }
-
-        return null;
     }
 }
