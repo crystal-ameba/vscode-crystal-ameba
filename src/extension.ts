@@ -8,18 +8,24 @@ export function activate(context: ExtensionContext) {
 	context.subscriptions.push(diag);
 
     context.subscriptions.push(
-        commands.registerCommand('crystal.ameba.lint', async () => {
-            if (!ameba) {
-                const enable = await window.showWarningMessage(
+        commands.registerCommand('crystal.ameba.lint', () => {
+            if (ameba) {
+                const editor = window.activeTextEditor;
+                if (editor) ameba.execute(editor.document);
+            } else {
+                window.showWarningMessage(
                     'Ameba has been disabled for this workspace.',
                     'Enable'
+                ).then(
+                    enable => {
+                        if (!enable) return;
+                        ameba = new Ameba(diag);
+                        const editor = window.activeTextEditor;
+                        if (editor) ameba.execute(editor.document);
+                    },
+                    _ => {}
                 );
-                if (!enable) return;
-                ameba = new Ameba(diag);
             }
-
-            const editor = window.activeTextEditor;
-            if (editor) ameba.execute(editor.document);
         })
     );
 

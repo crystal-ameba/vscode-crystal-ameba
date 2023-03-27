@@ -38,16 +38,19 @@ export class Ameba {
         }
 
         const task = new Task(document.uri, token => {
-            const proc = exec(args.join(' '), async (err, stdout, stderr) => {
+            const proc = exec(args.join(' '), (err, stdout, stderr) => {
                 if (token.isCanceled) return;
+                this.diag.delete(document.uri);
 
                 if (err && stderr.length) {
                     if ((process.platform == 'win32' && err.code === 1) || err.code === 127) {
-                        const disable = await window.showErrorMessage(
-                            `Could not execute the Ameba file at: ${args[0]}`,
+                        window.showErrorMessage(
+                            `Could not execute Ameba file${args[0] === 'ameba' ? '.' : ` at ${args[0]}`}`,
                             'Disable (workspace)'
+                        ).then(
+                            disable => disable && commands.executeCommand('crystal.ameba.disable'),
+                            _ => {}
                         );
-                        if (!!disable) await commands.executeCommand('crystal.ameba.disable');
                     } else {
                         window.showErrorMessage(stderr);
                     }
