@@ -1,44 +1,73 @@
-import * as vscode from 'vscode';
+import { commands, ExtensionContext, languages, window, workspace } from 'vscode';
 import { Ameba } from './ameba';
-import { onDidChangeConfiguration } from './configuration';
+import { getConfig } from './configuration';
 
-export function activate(context: vscode.ExtensionContext) {
-
-	const diag = vscode.languages.createDiagnosticCollection('crystal');
+export function activate(context: ExtensionContext) {
+	const diag = languages.createDiagnosticCollection('crystal');
+	let ameba: Ameba | null = new Ameba(diag);
 	context.subscriptions.push(diag);
 
-	const ameba = new Ameba(diag);
+    context.subscriptions.push(
+        commands.registerCommand('crystal.ameba.lint', () => {
+            if (ameba) {
+                const editor = window.activeTextEditor;
+                if (editor) ameba.execute(editor.document);
+            } else {
+                window.showWarningMessage(
+                    'Ameba has been disabled for this workspace.',
+                    'Enable'
+                ).then(
+                    enable => {
+                        if (!enable) return;
+                        ameba = new Ameba(diag);
+                        const editor = window.activeTextEditor;
+                        if (editor) ameba.execute(editor.document);
+                    },
+                    _ => {}
+                );
+            }
+        })
+    );
 
-	let disposable = vscode.commands.registerCommand('crystal.ameba', () => {
-		const textEditor = vscode.window.activeTextEditor;
-		if (textEditor) {
-			const document = textEditor.document;
-			ameba.execute(document);
-		}
-	});
+    context.subscriptions.push(
+        commands.registerCommand('crystal.ameba.restart', () => {
+            if (ameba) {
+                const editor = window.activeTextEditor;
+                if (editor) ameba.clear(editor.document);
+            } else {
+                ameba = new Ameba(diag);
+            }
+        })
+    );
 
-	context.subscriptions.push(disposable);
+    context.subscriptions.push(
+        commands.registerCommand('crystal.ameba.disable', () => {
+            if (!ameba) return;
+            const editor = window.activeTextEditor;
+            if (editor) ameba.clear(editor.document);
+            ameba = null;
+        })
+    );
 
-    const ws = vscode.workspace;
-
-    ws.onDidChangeConfiguration(onDidChangeConfiguration(ameba));
-
-    ws.textDocuments.forEach((e: vscode.TextDocument) => {
-        ameba.execute(e);
+    workspace.onDidChangeConfiguration(_ => {
+        if (!ameba) return;
+        ameba.config = getConfig();
     });
 
-    ws.onDidOpenTextDocument((e: vscode.TextDocument) => {
-        ameba.execute(e);
+    workspace.textDocuments.forEach(doc => {
+        ameba && ameba.execute(doc);
     });
 
-    ws.onDidSaveTextDocument((e: vscode.TextDocument) => {
-        if (ameba.config.onSave) {
-            ameba.execute(e);
-        }
+    workspace.onDidOpenTextDocument(doc => {
+        ameba && ameba.execute(doc);
     });
 
-    ws.onDidCloseTextDocument((e: vscode.TextDocument) => {
-        ameba.clear(e);
+    workspace.onDidSaveTextDocument(doc => {
+        if (ameba && ameba.config.onSave) ameba.execute(doc);
+    });
+
+    workspace.onDidCloseTextDocument(doc => {
+        ameba && ameba.clear(doc);
     });
 }
 
