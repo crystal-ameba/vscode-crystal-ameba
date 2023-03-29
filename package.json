@@ -2,6 +2,7 @@
   "name": "crystal-ameba",
   "displayName": "crystal-ameba",
   "publisher": "veelenga",
+  "icon": "assets/ameba.png",
   "description": "Ameba extension for Visual Studio Code",
   "version": "0.0.5",
   "license": "MIT",
