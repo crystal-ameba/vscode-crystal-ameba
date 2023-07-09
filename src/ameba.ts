@@ -76,6 +76,9 @@ export class Ameba {
                     source.issues.forEach(issue => {
                         let start = issue.location;
                         let end = issue.end_location;
+                        if (!end.line || !end.column) {
+                            end = start;
+                        }
                         const range = new Range(
                             start.line - 1,
                             start.column - 1,
