@@ -1,5 +1,6 @@
 import { exec } from 'child_process';
 import * as path from 'path';
+import { existsSync } from 'fs';
 import {
     commands,
     Diagnostic,
@@ -32,10 +33,9 @@ export class Ameba {
         }
 
         const args = [this.config.command, document.fileName, '--format', 'json'];
-        if (this.config.configFileName.length) {
-            const dir = workspace.getWorkspaceFolder(document.uri)!.uri.fsPath;
-            args.push('--config', path.join(dir, this.config.configFileName));
-        }
+        const dir = workspace.getWorkspaceFolder(document.uri)!.uri.fsPath;
+        const configFile = path.join(dir, this.config.configFileName);
+        if (existsSync(configFile)) args.push('--config', configFile);
 
         const task = new Task(document.uri, token => {
             const proc = exec(args.join(' '), (err, stdout, stderr) => {
