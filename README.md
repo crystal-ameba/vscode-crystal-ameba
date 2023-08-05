@@ -15,7 +15,7 @@ This extension provides an interface to [Ameba](https://github.com/crystal-ameba
 
 ## Releasing a new version
 
-1. Update CHANGELOG.md
+1. Update [CHANGELOG.md](https://github.com/crystal-ameba/vscode-crystal-ameba/blob/master/CHANGELOG.md)
 2. Bump a new version
 3. Build an extension `vsce package`
 4. Publish to the [marketplace](https://marketplace.visualstudio.com/manage/publishers/veelenga)
