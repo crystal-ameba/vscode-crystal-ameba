@@ -1,7 +1,12 @@
-# Change Log
-All notable changes to the "vscode-crystal-ameba" extension will be documented in this file.
+#### 0.2.1 (2023-08-05)
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+##### Chores
+
+* Check config file existence for new ameba version by @joseafga #42 https://github.com/crystal-ameba/vscode-crystal-ameba/pull/42
+* Bump @types/node from 20.4.4 to 20.4.5 by @dependabot in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/40
+* Bump @types/node from 20.4.2 to 20.4.4 by @dependabot in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/39
+* Bump @types/node from 20.4.1 to 20.4.2 by @dependabot in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/38
+* Bump semver from 5.7.1 to 5.7.2 by @dependabot in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/37
 
 ## [v0.2.0]
 
