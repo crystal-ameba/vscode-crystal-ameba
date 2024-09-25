@@ -3,9 +3,9 @@ import { Ameba } from './ameba';
 import { getConfig } from './configuration';
 
 export function activate(context: ExtensionContext) {
-	const diag = languages.createDiagnosticCollection('crystal');
-	let ameba: Ameba | null = new Ameba(diag);
-	context.subscriptions.push(diag);
+    const diag = languages.createDiagnosticCollection('crystal');
+    let ameba: Ameba | null = new Ameba(diag);
+    context.subscriptions.push(diag);
 
     context.subscriptions.push(
         commands.registerCommand('crystal.ameba.lint', () => {
@@ -23,7 +23,7 @@ export function activate(context: ExtensionContext) {
                         const editor = window.activeTextEditor;
                         if (editor) ameba.execute(editor.document);
                     },
-                    _ => {}
+                    _ => { }
                 );
             }
         })
@@ -62,6 +62,10 @@ export function activate(context: ExtensionContext) {
         ameba && ameba.execute(doc);
     });
 
+    workspace.onDidChangeTextDocument(e => {
+        if (ameba && ameba.config.onType) ameba.execute(e.document, true);
+    })
+
     workspace.onDidSaveTextDocument(doc => {
         if (ameba && ameba.config.onSave) ameba.execute(doc);
     });
@@ -71,4 +75,4 @@ export function activate(context: ExtensionContext) {
     });
 }
 
-export function deactivate() {}
+export function deactivate() { }

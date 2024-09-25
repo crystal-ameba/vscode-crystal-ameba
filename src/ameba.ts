@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { spawn } from 'child_process';
 import * as path from 'path';
 import { existsSync } from 'fs';
 import {
@@ -27,7 +27,7 @@ export class Ameba {
         this.config = getConfig();
     }
 
-    public execute(document: TextDocument): void {
+    public execute(document: TextDocument, virtual: boolean = false): void {
         if (document.languageId !== 'crystal' || document.isUntitled || document.uri.scheme !== 'file') {
             return;
         }
@@ -37,13 +37,41 @@ export class Ameba {
         const configFile = path.join(dir, this.config.configFileName);
         if (existsSync(configFile)) args.push('--config', configFile);
 
+        if (virtual) args.push('--stdin-filename', document.uri.fsPath)
+
         const task = new Task(document.uri, token => {
-            const proc = exec(args.join(' '), (err, stdout, stderr) => {
+            let stdoutArr: string[] = [];
+            let stderrArr: string[] = [];
+
+            const proc = spawn(args[0], args.slice(1));
+
+            if (virtual) {
+                const documentText: string = document.getText();
+                proc.stdin.write(documentText)
+            }
+
+            proc.stdout.on('data', (data) => {
+                stdoutArr.push(data.toString());
+            })
+
+            proc.stderr.on('data', (data) => {
+                stderrArr.push(data.toString());
+            })
+
+            proc.on('error', (err) => {
+                console.error('Failed to start subprocess:', err);
+                window.showErrorMessage(`Failed to start Ameba: ${err.message}`)
+            })
+
+            proc.on('close', (code) => {
+                const stdout = stdoutArr.join('')
+                const stderr = stderrArr.join('')
+
                 if (token.isCanceled) return;
                 this.diag.delete(document.uri);
 
-                if (err && stderr.length) {
-                    if ((process.platform == 'win32' && err.code === 1) || err.code === 127) {
+                if (code !== 0 && stderr.length) {
+                    if ((process.platform == 'win32' && code === 1) || code === 127) {
                         window.showErrorMessage(
                             `Could not execute Ameba file${args[0] === 'ameba' ? '.' : ` at ${args[0]}`}`,
                             'Disable (workspace)'
@@ -58,6 +86,7 @@ export class Ameba {
                 }
 
                 let results: AmebaOutput;
+
                 try {
                     results = JSON.parse(stdout);
                 } catch (err) {
@@ -76,9 +105,11 @@ export class Ameba {
                     source.issues.forEach(issue => {
                         let start = issue.location;
                         let end = issue.end_location;
+
                         if (!end.line || !end.column) {
                             end = start;
                         }
+
                         const range = new Range(
                             start.line - 1,
                             start.column - 1,
@@ -91,6 +122,7 @@ export class Ameba {
                             `[${issue.rule_name}] ${issue.message}`,
                             this.parseSeverity(issue.severity)
                         );
+
                         diag.code = {
                             value: "Docs",
                             target: Uri.parse(`https://crystaldoc.info/github/crystal-ameba/ameba/v${results.metadata.ameba_version}/Ameba/Rule/${issue.rule_name}.html`)

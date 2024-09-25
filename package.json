@@ -4,10 +4,10 @@
   "publisher": "veelenga",
   "icon": "assets/ameba.png",
   "description": "Ameba extension for Visual Studio Code",
-  "version": "0.2.1",
+  "version": "0.2.2-alpha1",
   "license": "MIT",
   "engines": {
-    "vscode": "^1.62.0"
+    "vscode": "^1.93.0"
   },
   "repository": {
     "type": "git",
@@ -18,8 +18,7 @@
     "Linters"
   ],
   "activationEvents": [
-    "onLanguage:crystal",
-    "onCommand:crystal.ameba.lint"
+    "onLanguage:crystal"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -44,7 +43,18 @@
         "command": "crystal.ameba.disable",
         "title": "Crystal Ameba: disable lints (workspace)"
       }
-    ]
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Crystal Ameba configuration",
+      "properties": {
+        "crystal-ameba.onType": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run Ameba linter while typing (requires ameba > v1.6.1)"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "yarn run compile",

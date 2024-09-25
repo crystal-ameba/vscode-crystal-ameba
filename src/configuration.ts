@@ -6,6 +6,7 @@ export interface AmebaConfig {
     command: string;
     configFileName: string;
     onSave: boolean;
+    onType: boolean;
 }
 
 export function getConfig(): AmebaConfig {
@@ -16,9 +17,12 @@ export function getConfig(): AmebaConfig {
         if (existsSync(localAmebaPath)) command = localAmebaPath;
     }
 
+    const workspaceConfig = workspace.getConfiguration('crystal-ameba');
+
     return {
         command,
         configFileName: '.ameba.yml',
-        onSave: true
+        onSave: true,
+        onType: workspaceConfig.get<boolean>("onType") || false
     };
 };
