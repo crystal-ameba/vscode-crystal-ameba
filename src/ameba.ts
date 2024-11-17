@@ -35,22 +35,21 @@ export class Ameba {
 
         // When reading from stdin, cannot pass any files via the CLI, otherwise there will be overlaps
         // and potentially out of date errors
-        const devNull = process.platform === "win32" ? "nul" : "/dev/null"
-        const mainFile = virtual ? devNull : document.fileName
+        const space = workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document);
+        const args = [this.config.command];
 
-        const args = [this.config.command, mainFile, '--format', 'json'];
-        const space = workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document)
+        if (!virtual) {
+            args.push(document.fileName);
+        } else {
+            args.push('--stdin-filename', document.uri.fsPath);
 
-        const configFile: string = path.join(space.uri.fsPath, this.config.configFileName);
-
-        if (existsSync(configFile)) args.push('--config', configFile);
-
-        if (virtual) {
-            args.push('--stdin-filename', document.uri.fsPath)
-
-            // Disabiling these as they're common when typing
-            args.push("--except=Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace")
+            // Disabling these as they're common when typing
+            args.push('--except', 'Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace');
         }
+        args.push('--format', 'json');
+
+        const configFile = path.join(space.uri.fsPath, this.config.configFileName);
+        if (existsSync(configFile)) args.push('--config', configFile);
 
         const task = new Task(document.uri, token => {
             let stdoutArr: string[] = [];
