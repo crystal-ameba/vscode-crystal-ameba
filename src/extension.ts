@@ -13,7 +13,7 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(
         commands.registerCommand('crystal.ameba.lint', () => {
             if (ameba) {
-                outputChannel.appendLine('[Link] Running ameba on current document')
+                outputChannel.appendLine('[Lint] Running ameba on current document')
                 const editor = window.activeTextEditor;
                 if (editor) ameba.execute(editor.document);
             } else {
