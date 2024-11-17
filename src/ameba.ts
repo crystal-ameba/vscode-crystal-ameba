@@ -81,10 +81,10 @@ export class Ameba {
             })
 
             proc.on('close', (code) => {
+                if (token.isCancellationRequested) return;
+
                 const stdout = stdoutArr.join('')
                 const stderr = stderrArr.join('')
-
-                if (token.isCancellationRequested) return;
                 this.diag.delete(document.uri);
 
                 if (code !== 0 && stderr.length) {
