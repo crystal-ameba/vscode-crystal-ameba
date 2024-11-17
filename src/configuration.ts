@@ -28,9 +28,9 @@ export function getConfig(): AmebaConfig {
     const workspaceConfig = workspace.getConfiguration('crystal-ameba');
     const currentVersion = execSync(`"${command}" --version`).toString();
 
-    // Support added in ameba v1.6.3
+    // Support added in ameba v1.6.2
     let onType = workspaceConfig.get<boolean>("onType", true) &&
-        semver.satisfies(currentVersion, ">=1.6.3")
+        semver.satisfies(currentVersion, ">=1.6.2")
 
     return {
         command,
