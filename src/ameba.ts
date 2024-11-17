@@ -15,6 +15,7 @@ import {
 import { AmebaOutput } from './amebaOutput';
 import { AmebaConfig, getConfig } from './configuration';
 import { Task, TaskQueue } from './taskQueue';
+import { noWorkspaceFolder, outputChannel } from './extension';
 
 export class Ameba {
     private diag: DiagnosticCollection;
@@ -32,12 +33,24 @@ export class Ameba {
             return;
         }
 
-        const args = [this.config.command, document.fileName, '--format', 'json'];
-        const dir = workspace.getWorkspaceFolder(document.uri)!.uri.fsPath;
-        const configFile = path.join(dir, this.config.configFileName);
+        // When reading from stdin, cannot pass any files via the CLI, otherwise there will be overlaps
+        // and potentially out of date errors
+        const devNull = process.platform === "win32" ? "nul" : "/dev/null"
+        const mainFile = virtual ? devNull : document.fileName
+
+        const args = [this.config.command, mainFile, '--format', 'json'];
+        const space = workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document)
+
+        const configFile: string = path.join(space.uri.fsPath, this.config.configFileName);
+
         if (existsSync(configFile)) args.push('--config', configFile);
 
-        if (virtual) args.push('--stdin-filename', document.uri.fsPath)
+        if (virtual) {
+            args.push('--stdin-filename', document.uri.fsPath)
+
+            // Disabiling these as they're common when typing
+            args.push("--except=Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace")
+        }
 
         const task = new Task(document.uri, token => {
             let stdoutArr: string[] = [];
@@ -48,7 +61,12 @@ export class Ameba {
             if (virtual) {
                 const documentText: string = document.getText();
                 proc.stdin.write(documentText)
+                proc.stdin.end();
             }
+
+            token.onCancellationRequested(_ => {
+                proc.kill();
+            })
 
             proc.stdout.on('data', (data) => {
                 stdoutArr.push(data.toString());
@@ -67,7 +85,7 @@ export class Ameba {
                 const stdout = stdoutArr.join('')
                 const stderr = stderrArr.join('')
 
-                if (token.isCanceled) return;
+                if (token.isCancellationRequested) return;
                 this.diag.delete(document.uri);
 
                 if (code !== 0 && stderr.length) {
@@ -131,13 +149,13 @@ export class Ameba {
                         parsed.push(diag);
                     });
 
+                    outputChannel.appendLine(`[Task] (${path.relative(space.uri.fsPath, source.path)}) Found ${parsed.length} issues`)
                     diagnostics.push([document.uri, parsed]);
                 }
 
                 this.diag.set(diagnostics);
+                outputChannel.appendLine(`[Task] Done!`)
             });
-
-            return () => proc.kill();
         });
 
         this.taskQueue.enqueue(task);

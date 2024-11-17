@@ -4,10 +4,10 @@
   "publisher": "veelenga",
   "icon": "assets/ameba.png",
   "description": "Ameba extension for Visual Studio Code",
-  "version": "0.2.2-alpha1",
+  "version": "0.2.2-alpha2",
   "license": "MIT",
   "engines": {
-    "vscode": "^1.93.0"
+    "vscode": "^1.95.0"
   },
   "repository": {
     "type": "git",
@@ -50,7 +50,7 @@
       "properties": {
         "crystal-ameba.onType": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "description": "Run Ameba linter while typing (requires ameba > v1.6.1)"
         }
       }
@@ -65,9 +65,13 @@
   "devDependencies": {
     "@types/mocha": "^10.0.9",
     "@types/node": "^22.9.0",
+    "@types/vscode": "^1.95.0",
+    "@types/semver": "^7.5.8",
     "tslint": "^6.1.3",
     "typescript": "^5.6.3",
-    "@types/vscode": "^1.95.0",
     "vscode-test": "^1.6.1"
+  },
+  "dependencies": {
+    "semver": "^7.6.3"
   }
 }

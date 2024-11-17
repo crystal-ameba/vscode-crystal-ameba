@@ -1,6 +1,9 @@
-import { commands, ExtensionContext, languages, window, workspace } from 'vscode';
+import { commands, ExtensionContext, languages, TextDocument, Uri, window, workspace, WorkspaceFolder } from 'vscode';
 import { Ameba } from './ameba';
 import { getConfig } from './configuration';
+import path = require('path');
+
+export const outputChannel = window.createOutputChannel("Crystal Ameba", "log")
 
 export function activate(context: ExtensionContext) {
     const diag = languages.createDiagnosticCollection('crystal');
@@ -10,6 +13,7 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(
         commands.registerCommand('crystal.ameba.lint', () => {
             if (ameba) {
+                outputChannel.appendLine('[Link] Running ameba on current document')
                 const editor = window.activeTextEditor;
                 if (editor) ameba.execute(editor.document);
             } else {
@@ -32,9 +36,11 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(
         commands.registerCommand('crystal.ameba.restart', () => {
             if (ameba) {
+                outputChannel.appendLine('[Restart] Clearing diagnostics')
                 const editor = window.activeTextEditor;
                 if (editor) ameba.clear(editor.document);
             } else {
+                outputChannel.appendLine('[Restart] Restarting ameba')
                 ameba = new Ameba(diag);
             }
         })
@@ -43,6 +49,7 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(
         commands.registerCommand('crystal.ameba.disable', () => {
             if (!ameba) return;
+            outputChannel.appendLine('[Disable] Disabling ameba for this session')
             const editor = window.activeTextEditor;
             if (editor) ameba.clear(editor.document);
             ameba = null;
@@ -51,28 +58,62 @@ export function activate(context: ExtensionContext) {
 
     workspace.onDidChangeConfiguration(_ => {
         if (!ameba) return;
+        outputChannel.appendLine(`[Config] Reloading config`)
         ameba.config = getConfig();
     });
 
     workspace.textDocuments.forEach(doc => {
-        ameba && ameba.execute(doc);
+        if (ameba && checkValidDocument(doc)) {
+            outputChannel.appendLine(`[Init] Running ameba on ${getRelativePath(doc)}`)
+            ameba.execute(doc);
+        }
     });
 
     workspace.onDidOpenTextDocument(doc => {
-        ameba && ameba.execute(doc);
+        if (ameba && checkValidDocument(doc)) {
+            outputChannel.appendLine(`[Open] Running ameba on ${getRelativePath(doc)}`)
+            ameba.execute(doc);
+        }
     });
 
     workspace.onDidChangeTextDocument(e => {
-        if (ameba && ameba.config.onType) ameba.execute(e.document, true);
+        if (ameba && ameba.config.onType && checkValidDocument(e.document)) {
+            outputChannel.appendLine(`[Change] Running ameba on ${getRelativePath(e.document)}`)
+            ameba.execute(e.document, true);
+        }
     })
 
     workspace.onDidSaveTextDocument(doc => {
-        if (ameba && ameba.config.onSave) ameba.execute(doc);
+        // If onType is enabled, it will be run when saving
+        if (ameba && ameba.config.onSave && !ameba.config.onType && checkValidDocument(doc)) {
+            outputChannel.appendLine(`[Save] Running ameba on ${getRelativePath(doc)}`)
+            ameba.execute(doc);
+        }
     });
 
     workspace.onDidCloseTextDocument(doc => {
-        ameba && ameba.clear(doc);
+        if (ameba && checkValidDocument(doc)) {
+            outputChannel.appendLine(`[Close] Clearing ${getRelativePath(doc)}`)
+            ameba.clear(doc);
+        }
     });
 }
 
 export function deactivate() { }
+
+function checkValidDocument(document: TextDocument): boolean {
+    return document.languageId === 'crystal' && !document.isUntitled && document.uri.scheme === 'file'
+}
+
+function getRelativePath(document: TextDocument): string {
+    const space: WorkspaceFolder = workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document)
+    return path.relative(space.uri.fsPath, document.uri.fsPath)
+}
+
+export function noWorkspaceFolder(document: TextDocument): WorkspaceFolder {
+    return {
+        uri: Uri.parse(path.dirname(document.uri.fsPath)),
+        name: path.basename(path.dirname(document.uri.fsPath)),
+        index: -1
+    }
+}
