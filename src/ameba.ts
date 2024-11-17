@@ -28,7 +28,7 @@ export class Ameba {
         this.config = getConfig();
     }
 
-    public execute(document: TextDocument, virtual: boolean = false): void {
+    public execute(document: TextDocument, virtual = false): void {
         if (document.languageId !== 'crystal' || document.isUntitled || document.uri.scheme !== 'file') {
             return;
         }
