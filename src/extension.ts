@@ -36,11 +36,13 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(
         commands.registerCommand('crystal.ameba.restart', () => {
             if (ameba) {
-                outputChannel.appendLine('[Restart] Clearing diagnostics')
                 const editor = window.activeTextEditor;
-                if (editor) ameba.clear(editor.document);
+                if (editor) {
+                    outputChannel.appendLine(`[Restart] Clearing diagnostics for ${getRelativePath(editor.document)}`)
+                    ameba.clear(editor.document);
+                }
             } else {
-                outputChannel.appendLine('[Restart] Restarting ameba')
+                outputChannel.appendLine('[Restart] Starting ameba')
                 ameba = new Ameba(diag);
             }
         })
@@ -62,12 +64,7 @@ export function activate(context: ExtensionContext) {
         ameba.config = getConfig();
     });
 
-    workspace.textDocuments.forEach(doc => {
-        if (ameba && checkValidDocument(doc)) {
-            outputChannel.appendLine(`[Init] Running ameba on ${getRelativePath(doc)}`)
-            ameba.execute(doc);
-        }
-    });
+    executeAmebaOnWorkspace(ameba);
 
     workspace.onDidOpenTextDocument(doc => {
         if (ameba && checkValidDocument(doc)) {
@@ -88,6 +85,10 @@ export function activate(context: ExtensionContext) {
         if (ameba && ameba.config.onSave && !ameba.config.onType && checkValidDocument(doc)) {
             outputChannel.appendLine(`[Save] Running ameba on ${getRelativePath(doc)}`)
             ameba.execute(doc);
+        } else if (ameba && path.basename(doc.fileName) == ".ameba.yml") {
+            outputChannel.appendLine(`[Config] Clearing all diagnostics after config file change`)
+            ameba.clear();
+            executeAmebaOnWorkspace(ameba);
         }
     });
 
@@ -95,6 +96,15 @@ export function activate(context: ExtensionContext) {
         if (ameba && checkValidDocument(doc)) {
             outputChannel.appendLine(`[Close] Clearing ${getRelativePath(doc)}`)
             ameba.clear(doc);
+        }
+    });
+}
+
+function executeAmebaOnWorkspace(ameba: Ameba | null) {
+    workspace.textDocuments.forEach(doc => {
+        if (ameba && checkValidDocument(doc)) {
+            outputChannel.appendLine(`[Init] Running ameba on ${getRelativePath(doc)}`);
+            ameba.execute(doc);
         }
     });
 }

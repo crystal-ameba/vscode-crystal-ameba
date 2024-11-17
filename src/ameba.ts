@@ -56,7 +56,7 @@ export class Ameba {
             let stdoutArr: string[] = [];
             let stderrArr: string[] = [];
 
-            const proc = spawn(args[0], args.slice(1));
+            const proc = spawn(args[0], args.slice(1), { cwd: space.uri.fsPath });
 
             if (virtual) {
                 const documentText: string = document.getText();
@@ -174,11 +174,16 @@ export class Ameba {
         }
     }
 
-    public clear(document: TextDocument): void {
-        let uri = document.uri;
-        if (uri.scheme === 'file') {
-            this.taskQueue.cancel(uri);
-            this.diag.delete(uri);
+    public clear(document: TextDocument | null = null): void {
+        if (document) {
+            let uri = document.uri;
+            if (uri.scheme === 'file') {
+                this.taskQueue.cancel(uri);
+                this.diag.delete(uri);
+            }
+        } else {
+            this.taskQueue.clear();
+            this.diag.clear();
         }
     }
 }

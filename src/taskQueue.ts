@@ -66,6 +66,12 @@ export class TaskQueue {
         });
     }
 
+    public clear(): void {
+        this.tasks.forEach(task => {
+            task.cancel();
+        })
+    }
+
     private async kick(): Promise<void> {
         if (this.busy) return;
         this.busy = true;
