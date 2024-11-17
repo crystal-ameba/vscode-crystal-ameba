@@ -33,11 +33,11 @@ export class Ameba {
             return;
         }
 
-        // When reading from stdin, cannot pass any files via the CLI, otherwise there will be overlaps
-        // and potentially out of date errors
         const space = workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document);
         const args = [this.config.command];
 
+        // When reading from stdin, cannot pass any files via the CLI, otherwise there will be overlaps
+        // and potentially out of date errors
         if (!virtual) {
             args.push(document.fileName);
         } else {
