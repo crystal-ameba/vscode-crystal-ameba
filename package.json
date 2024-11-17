@@ -51,7 +51,7 @@
         "crystal-ameba.onType": {
           "type": "boolean",
           "default": true,
-          "description": "Run Ameba linter while typing (requires ameba > v1.6.1)"
+          "description": "Run Ameba linter while typing"
         }
       }
     }
