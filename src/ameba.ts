@@ -49,7 +49,7 @@ export class Ameba {
                             'Disable (workspace)'
                         ).then(
                             disable => disable && commands.executeCommand('crystal.ameba.disable'),
-                            _ => {}
+                            _ => { }
                         );
                     } else {
                         window.showErrorMessage(stderr);
@@ -91,6 +91,11 @@ export class Ameba {
                             `[${issue.rule_name}] ${issue.message}`,
                             this.parseSeverity(issue.severity)
                         );
+                        diag.code = {
+                            value: "Docs",
+                            target: Uri.parse(`https://crystal-ameba.github.io/ameba/Ameba/Rule/${issue.rule_name}.html#overview`)
+                        }
+
                         parsed.push(diag);
                     });
 
@@ -107,7 +112,7 @@ export class Ameba {
     }
 
     private parseSeverity(severity: string): DiagnosticSeverity {
-        switch(severity) {
+        switch (severity) {
             case 'Error':
                 return DiagnosticSeverity.Error;
             case 'Warning':
