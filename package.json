@@ -56,7 +56,7 @@
         "crystal-ameba.onSave": {
           "type": "boolean",
           "default": true,
-          "description": "Run Ameba linter on saving"
+          "description": "Run Ameba linter on save"
         }
       }
     }
