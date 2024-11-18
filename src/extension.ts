@@ -40,6 +40,36 @@ export function activate(context: ExtensionContext) {
     );
 
     context.subscriptions.push(
+        commands.registerCommand('crystal.ameba.lint-workspace', () => {
+            if (ameba) {
+                outputChannel.appendLine('[Lint] Running ameba on current workspace')
+
+                if (!ameba) return;
+
+                workspace.workspaceFolders?.forEach(folder => {
+                    ameba && ameba.executeFolder(folder);
+                })
+
+            } else {
+                window.showWarningMessage(
+                    'Ameba has been disabled for this workspace.',
+                    'Enable'
+                ).then(
+                    enable => {
+                        if (!enable) return;
+                        ameba = new Ameba(diag);
+
+                        workspace.workspaceFolders?.forEach(folder => {
+                            ameba && ameba.executeFolder(folder);
+                        })
+                    },
+                    _ => { }
+                );
+            }
+        })
+    );
+
+    context.subscriptions.push(
         commands.registerCommand('crystal.ameba.restart', () => {
             if (ameba) {
                 const editor = window.activeTextEditor;
@@ -124,14 +154,14 @@ function documentIsOnDisk(doc: TextDocument): boolean {
 }
 
 function getRelativePath(document: TextDocument): string {
-    const space: WorkspaceFolder = workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document)
+    const space: WorkspaceFolder = workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document.uri)
     return path.relative(space.uri.fsPath, document.uri.fsPath)
 }
 
-export function noWorkspaceFolder(document: TextDocument): WorkspaceFolder {
+export function noWorkspaceFolder(uri: Uri): WorkspaceFolder {
     return {
-        uri: Uri.parse(path.dirname(document.uri.fsPath)),
-        name: path.basename(path.dirname(document.uri.fsPath)),
+        uri: Uri.parse(path.dirname(uri.fsPath)),
+        name: path.basename(path.dirname(uri.fsPath)),
         index: -1
     }
 }

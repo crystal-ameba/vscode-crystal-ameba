@@ -42,6 +42,10 @@
       {
         "command": "crystal.ameba.disable",
         "title": "Crystal Ameba: disable lints (workspace)"
+      },
+      {
+        "command": "crystal.ameba.lint-workspace",
+        "title": "Crystal Ameba: lint all files in workspace"
       }
     ],
     "configuration": {
