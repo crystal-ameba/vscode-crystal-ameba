@@ -101,8 +101,10 @@ export function activate(context: ExtensionContext) {
 }
 
 function executeAmebaOnWorkspace(ameba: Ameba | null) {
+    if (!ameba) return;
+
     workspace.textDocuments.forEach(doc => {
-        if (ameba && checkValidDocument(doc)) {
+        if (checkValidDocument(doc)) {
             outputChannel.appendLine(`[Init] Running ameba on ${getRelativePath(doc)}`);
             ameba.execute(doc);
         }
