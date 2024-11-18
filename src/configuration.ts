@@ -44,7 +44,7 @@ export function getConfig(): AmebaConfig {
     const lintScope = workspaceConfig.get<LintScope>("lint-scope", LintScope.File);
     let lintTrigger = workspaceConfig.get<LintTrigger>("lint-trigger", LintTrigger.Type);
 
-    if (!semver.satisfies(currentVersion, ">=1.6.2") && lintTrigger == LintTrigger.Type) {
+    if (!semver.satisfies(currentVersion, ">=1.6.4") && lintTrigger == LintTrigger.Type) {
         lintTrigger = LintTrigger.Save;
     }
 

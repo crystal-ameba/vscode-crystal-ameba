@@ -43,9 +43,6 @@ export class Ameba {
         if (!virtual) {
             args.push(document.fileName);
         } else {
-            // Need to pass in a null file otherwise ameba will run over the entire workspace
-            args.push(process.platform === "win32" ? "nul" : "/dev/null")
-
             args.push('--stdin-filename', document.uri.fsPath);
 
             // Disabling these as they're common when typing
