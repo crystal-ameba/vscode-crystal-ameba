@@ -10,8 +10,19 @@ import { outputChannel } from './extension';
 export interface AmebaConfig {
     command: string;
     configFileName: string;
-    onSave: boolean;
-    onType: boolean;
+    lintScope: LintScope;
+    lintTrigger: LintTrigger
+}
+
+export enum LintScope {
+    File = "file",
+    Workspace = "workspace"
+}
+
+export enum LintTrigger {
+    None = "none",
+    Save = "save",
+    Type = "type"
 }
 
 export function getConfig(): AmebaConfig {
@@ -30,14 +41,17 @@ export function getConfig(): AmebaConfig {
     const workspaceConfig = workspace.getConfiguration('crystal-ameba');
     const currentVersion = execSync(`"${command}" --version`).toString();
 
-    const onType = workspaceConfig.get<boolean>("onType", true) &&
-        semver.satisfies(currentVersion, ">=1.6.2");
-    const onSave = workspaceConfig.get<boolean>("onSave", true);
+    const lintScope = workspaceConfig.get<LintScope>("lint-scope", LintScope.File);
+    let lintTrigger = workspaceConfig.get<LintTrigger>("lint-trigger", LintTrigger.Type);
+
+    if (!semver.satisfies(currentVersion, ">=1.6.2") && lintTrigger == LintTrigger.Type) {
+        lintTrigger = LintTrigger.Save;
+    }
 
     return {
         command,
         configFileName: '.ameba.yml',
-        onSave: onSave,
-        onType: onType
+        lintScope: lintScope,
+        lintTrigger: lintTrigger
     };
 };

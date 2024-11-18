@@ -52,15 +52,24 @@
       "type": "object",
       "title": "Crystal Ameba configuration",
       "properties": {
-        "crystal-ameba.onType": {
-          "type": "boolean",
-          "default": true,
-          "description": "Run Ameba linter while typing"
+        "crystal-ameba.lint-scope": {
+          "type": "string",
+          "description": "Whether the linter should only care about open files or all files in the workspace.",
+          "default": "file",
+          "enum": [
+            "file",
+            "workspace"
+          ]
         },
-        "crystal-ameba.onSave": {
-          "type": "boolean",
-          "default": true,
-          "description": "Run Ameba linter on save"
+        "crystal-ameba.lint-trigger": {
+          "type": "string",
+          "description": "When the linter should be executed. Set to `none` to disable automatic linting.",
+          "default": "type",
+          "enum": [
+            "none",
+            "save",
+            "type"
+          ]
         }
       }
     }

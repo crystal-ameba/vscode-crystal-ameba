@@ -6,7 +6,7 @@ import {
 import * as path from 'path';
 
 import { Ameba } from './ameba';
-import { getConfig } from './configuration';
+import { getConfig, LintTrigger, LintScope } from './configuration';
 
 
 export const outputChannel = window.createOutputChannel("Crystal Ameba", "log")
@@ -88,8 +88,7 @@ export function activate(context: ExtensionContext) {
         commands.registerCommand('crystal.ameba.disable', () => {
             if (!ameba) return;
             outputChannel.appendLine('[Disable] Disabling ameba for this session')
-            const editor = window.activeTextEditor;
-            if (editor) ameba.clear(editor.document);
+            ameba.clear();
             ameba = null;
         })
     );
@@ -98,19 +97,23 @@ export function activate(context: ExtensionContext) {
         if (!ameba) return;
         outputChannel.appendLine(`[Config] Reloading config`)
         ameba.config = getConfig();
+
+        outputChannel.appendLine(`[Config] Clearing all diagnostics after config change`)
+        ameba.clear();
+        executeAmebaOnWorkspace(ameba);
     });
 
-    executeAmebaOnOpenDocuments(ameba);
+    executeAmebaOnWorkspace(ameba);
 
     workspace.onDidOpenTextDocument(doc => {
-        if (ameba && documentIsOnDisk(doc)) {
+        if (ameba && ameba.config.lintTrigger != LintTrigger.None && documentIsOnDisk(doc)) {
             outputChannel.appendLine(`[Open] Running ameba on ${getRelativePath(doc)}`)
             ameba.execute(doc);
         }
     });
 
     workspace.onDidChangeTextDocument(e => {
-        if (ameba && (ameba.config.onType && ameba.config.onSave) && e.document.languageId === 'crystal') {
+        if (ameba && ameba.config.lintTrigger == LintTrigger.Type && e.document.languageId === 'crystal') {
             outputChannel.appendLine(`[Change] Running ameba on ${getRelativePath(e.document)}`)
             ameba.execute(e.document, true);
         }
@@ -118,33 +121,40 @@ export function activate(context: ExtensionContext) {
 
     workspace.onDidSaveTextDocument(doc => {
         // If onType is enabled, it will be run when saving
-        if (ameba && ameba.config.onSave && !ameba.config.onType && documentIsOnDisk(doc)) {
+        if (ameba && ameba.config.lintTrigger == LintTrigger.Save && documentIsOnDisk(doc)) {
             outputChannel.appendLine(`[Save] Running ameba on ${getRelativePath(doc)}`)
             ameba.execute(doc);
         } else if (ameba && path.basename(doc.fileName) == ".ameba.yml") {
             outputChannel.appendLine(`[Config] Clearing all diagnostics after config file change`)
             ameba.clear();
-            executeAmebaOnOpenDocuments(ameba);
+            executeAmebaOnWorkspace(ameba);
         }
     });
 
     workspace.onDidCloseTextDocument(doc => {
-        if (ameba && doc.languageId === 'crystal') {
+        if (ameba && doc.languageId === 'crystal' && ameba.config.lintScope == LintScope.File) {
             outputChannel.appendLine(`[Close] Clearing ${getRelativePath(doc)}`)
             ameba.clear(doc);
         }
     });
 }
 
-function executeAmebaOnOpenDocuments(ameba: Ameba | null) {
+function executeAmebaOnWorkspace(ameba: Ameba | null) {
     if (!ameba) return;
 
-    workspace.textDocuments.forEach(doc => {
-        if (documentIsOnDisk(doc) && !doc.isClosed) {
-            outputChannel.appendLine(`[Init] Running ameba on ${getRelativePath(doc)}`);
-            ameba.execute(doc);
-        }
-    });
+    if (ameba.config.lintScope == LintScope.File) {
+        workspace.textDocuments.forEach(doc => {
+            if (documentIsOnDisk(doc) && !doc.isClosed) {
+                outputChannel.appendLine(`[Init] Running ameba on ${getRelativePath(doc)}`);
+                ameba.execute(doc);
+            }
+        });
+    } else {
+        workspace.workspaceFolders?.forEach(folder => {
+            outputChannel.appendLine(`[Init] Running ameba on ${folder.name}`);
+            ameba && ameba.executeFolder(folder);
+        })
+    }
 }
 
 export function deactivate() { }
