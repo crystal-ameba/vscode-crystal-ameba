@@ -156,9 +156,13 @@ export class Ameba {
                         parsed.push(diag);
                     });
 
-                    let diagnosticUri = Uri.parse(path.join(space.uri.fsPath, source.path));
-                    if (document.isUntitled) {
+                    let diagnosticUri: Uri;
+                    if (path.isAbsolute(source.path)) {
+                        diagnosticUri = Uri.parse(source.path)
+                    } else if (document.isUntitled) {
                         diagnosticUri = document.uri;
+                    } else {
+                        diagnosticUri = Uri.parse(path.join(space.uri.fsPath, source.path));
                     }
 
                     outputChannel.appendLine(`[Task] (${path.relative(space.uri.fsPath, source.path)}) Found ${parsed.length} issues`)
@@ -273,7 +277,12 @@ export class Ameba {
                         parsed.push(diag);
                     });
 
-                    let diagnosticUri = Uri.parse(path.join(folder.uri.fsPath, source.path));
+                    let diagnosticUri: Uri
+                    if (path.isAbsolute(source.path)) {
+                        diagnosticUri = Uri.parse(source.path)
+                    } else {
+                        diagnosticUri = Uri.parse(path.join(folder.uri.fsPath, source.path));
+                    }
 
                     const logPath = path.normalize(path.relative(folder.uri.fsPath, source.path))
                     outputChannel.appendLine(`[Task] (${logPath}) Found ${parsed.length} issues`)
