@@ -1,9 +1,11 @@
 import { workspace } from 'vscode';
 import * as path from 'path';
 import { existsSync } from 'fs';
-import semver = require('semver');
+import * as semver from 'semver';
 import { execSync } from 'child_process';
+
 import { outputChannel } from './extension';
+
 
 export interface AmebaConfig {
     command: string;
@@ -28,9 +30,9 @@ export function getConfig(): AmebaConfig {
     const workspaceConfig = workspace.getConfiguration('crystal-ameba');
     const currentVersion = execSync(`"${command}" --version`).toString();
 
-    const onSave = workspaceConfig.get<boolean>("onSave", true);
     const onType = workspaceConfig.get<boolean>("onType", true) &&
         semver.satisfies(currentVersion, ">=1.6.2");
+    const onSave = workspaceConfig.get<boolean>("onSave", true);
 
     return {
         command,

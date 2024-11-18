@@ -1,7 +1,13 @@
-import { commands, ExtensionContext, languages, TextDocument, Uri, window, workspace, WorkspaceFolder } from 'vscode';
+import {
+    commands, ExtensionContext, languages,
+    TextDocument, Uri, window,
+    workspace, WorkspaceFolder
+} from 'vscode';
+import * as path from 'path';
+
 import { Ameba } from './ameba';
 import { getConfig } from './configuration';
-import path = require('path');
+
 
 export const outputChannel = window.createOutputChannel("Crystal Ameba", "log")
 
@@ -64,17 +70,17 @@ export function activate(context: ExtensionContext) {
         ameba.config = getConfig();
     });
 
-    executeAmebaOnWorkspace(ameba);
+    executeAmebaOnOpenDocuments(ameba);
 
     workspace.onDidOpenTextDocument(doc => {
-        if (ameba && checkValidDocument(doc)) {
+        if (ameba && documentIsOnDisk(doc)) {
             outputChannel.appendLine(`[Open] Running ameba on ${getRelativePath(doc)}`)
             ameba.execute(doc);
         }
     });
 
     workspace.onDidChangeTextDocument(e => {
-        if (ameba && ameba.config.onType && checkValidDocument(e.document)) {
+        if (ameba && (ameba.config.onType && ameba.config.onSave) && e.document.languageId === 'crystal') {
             outputChannel.appendLine(`[Change] Running ameba on ${getRelativePath(e.document)}`)
             ameba.execute(e.document, true);
         }
@@ -82,29 +88,29 @@ export function activate(context: ExtensionContext) {
 
     workspace.onDidSaveTextDocument(doc => {
         // If onType is enabled, it will be run when saving
-        if (ameba && ameba.config.onSave && !ameba.config.onType && checkValidDocument(doc)) {
+        if (ameba && ameba.config.onSave && !ameba.config.onType && documentIsOnDisk(doc)) {
             outputChannel.appendLine(`[Save] Running ameba on ${getRelativePath(doc)}`)
             ameba.execute(doc);
         } else if (ameba && path.basename(doc.fileName) == ".ameba.yml") {
             outputChannel.appendLine(`[Config] Clearing all diagnostics after config file change`)
             ameba.clear();
-            executeAmebaOnWorkspace(ameba);
+            executeAmebaOnOpenDocuments(ameba);
         }
     });
 
     workspace.onDidCloseTextDocument(doc => {
-        if (ameba && checkValidDocument(doc)) {
+        if (ameba && doc.languageId === 'crystal') {
             outputChannel.appendLine(`[Close] Clearing ${getRelativePath(doc)}`)
             ameba.clear(doc);
         }
     });
 }
 
-function executeAmebaOnWorkspace(ameba: Ameba | null) {
+function executeAmebaOnOpenDocuments(ameba: Ameba | null) {
     if (!ameba) return;
 
     workspace.textDocuments.forEach(doc => {
-        if (checkValidDocument(doc)) {
+        if (documentIsOnDisk(doc) && !doc.isClosed) {
             outputChannel.appendLine(`[Init] Running ameba on ${getRelativePath(doc)}`);
             ameba.execute(doc);
         }
@@ -113,8 +119,8 @@ function executeAmebaOnWorkspace(ameba: Ameba | null) {
 
 export function deactivate() { }
 
-function checkValidDocument(document: TextDocument): boolean {
-    return document.languageId === 'crystal' && !document.isUntitled && document.uri.scheme === 'file'
+function documentIsOnDisk(doc: TextDocument): boolean {
+    return doc.languageId === 'crystal' && !doc.isUntitled && doc.uri.scheme === 'file'
 }
 
 function getRelativePath(document: TextDocument): string {

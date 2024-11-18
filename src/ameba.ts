@@ -12,10 +12,12 @@ import {
     window,
     workspace
 } from 'vscode';
+
 import { AmebaOutput } from './amebaOutput';
 import { AmebaConfig, getConfig } from './configuration';
 import { Task, TaskQueue } from './taskQueue';
 import { noWorkspaceFolder, outputChannel } from './extension';
+
 
 export class Ameba {
     private diag: DiagnosticCollection;
@@ -29,9 +31,8 @@ export class Ameba {
     }
 
     public execute(document: TextDocument, virtual = false): void {
-        if (document.languageId !== 'crystal' || document.isUntitled || document.uri.scheme !== 'file') {
-            return;
-        }
+        if (document.languageId !== 'crystal') return;
+        if ((document.isUntitled || document.uri.scheme !== 'file') && !virtual) return;
 
         const space = workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document);
         const args = [this.config.command];
@@ -41,10 +42,13 @@ export class Ameba {
         if (!virtual) {
             args.push(document.fileName);
         } else {
+            // Need to pass in a null file otherwise ameba will run over the entire workspace
+            args.push(process.platform === "win32" ? "nul" : "/dev/null")
+
             args.push('--stdin-filename', document.uri.fsPath);
 
             // Disabling these as they're common when typing
-            args.push('--except', 'Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace');
+            args.push('--except', 'Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace,Naming/Filename');
         }
         args.push('--format', 'json');
 
@@ -55,6 +59,7 @@ export class Ameba {
             let stdoutArr: string[] = [];
             let stderrArr: string[] = [];
 
+            outputChannel.appendLine(`$ ${args.join(' ')}`)
             const proc = spawn(args[0], args.slice(1), { cwd: space.uri.fsPath });
 
             if (virtual) {
@@ -149,8 +154,13 @@ export class Ameba {
                         parsed.push(diag);
                     });
 
+                    let diagnosticUri = Uri.parse(source.path);
+                    if (document.isUntitled) {
+                        diagnosticUri = document.uri;
+                    }
+
                     outputChannel.appendLine(`[Task] (${path.relative(space.uri.fsPath, source.path)}) Found ${parsed.length} issues`)
-                    diagnostics.push([document.uri, parsed]);
+                    diagnostics.push([diagnosticUri, parsed]);
                 }
 
                 this.diag.set(diagnostics);

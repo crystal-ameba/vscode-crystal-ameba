@@ -1,5 +1,7 @@
 import { CancellationToken, CancellationTokenSource, Uri } from 'vscode';
+
 import { outputChannel } from './extension';
+
 
 /**
  * Task with async operation. It will be enqueued to and managed by
@@ -22,8 +24,8 @@ export class Task {
         this.body = body;
     }
 
-    public run() {
-        if (this.cancelToken.isCancellationRequested) return Promise.resolve();
+    public run(): void {
+        if (this.cancelToken.isCancellationRequested) return;
 
         const task = this;
         return task.body(this.cancelToken);
