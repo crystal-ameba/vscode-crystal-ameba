@@ -83,9 +83,10 @@ export class Ameba {
             proc.on('close', (code) => {
                 if (token.isCancellationRequested) return;
 
+                this.diag.delete(document.uri);
+
                 const stdout = stdoutArr.join('')
                 const stderr = stderrArr.join('')
-                this.diag.delete(document.uri);
 
                 if (code !== 0 && stderr.length) {
                     if ((process.platform == 'win32' && code === 1) || code === 127) {
