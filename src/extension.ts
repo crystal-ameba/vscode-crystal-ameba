@@ -132,10 +132,33 @@ export function activate(context: ExtensionContext) {
     });
 
     workspace.onDidCloseTextDocument(doc => {
-        if (ameba && doc.languageId === 'crystal' && ameba.config.lintScope == LintScope.File) {
-            outputChannel.appendLine(`[Close] Clearing ${getRelativePath(doc)}`)
-            ameba.clear(doc);
+        if (ameba && doc.languageId === 'crystal') {
+            let clearDocument = false
+
+            if (ameba.config.lintScope == LintScope.File) {
+                clearDocument = true;
+            } else if (workspace.workspaceFolders === undefined) {
+                clearDocument = true;
+            } else {
+                let inWorkspaces = false
+                for (let folder of workspace.workspaceFolders) {
+                    if (doc.uri.fsPath.startsWith(folder.uri.fsPath)) {
+                        inWorkspaces = true
+                        break;
+                    }
+                }
+
+                if (!inWorkspaces) {
+                    clearDocument = true;
+                }
+            }
+
+            if (clearDocument) {
+                outputChannel.appendLine(`[Close] Clearing ${getRelativePath(doc)}`)
+                ameba.clear(doc);
+            }
         }
+
     });
 }
 
