@@ -161,7 +161,7 @@ export class Ameba {
                     }
 
                     this.diag.set(diagnostics);
-                    outputChannel.appendLine(`[Task] Done!`)
+                    outputChannel.appendLine('[Task] Done!')
                     resolve();
                 });
             })
