@@ -10,7 +10,7 @@ import { outputChannel } from './extension';
 export class Task {
     public readonly uri: Uri;
     public isEnqueued: boolean = false;
-    private body: (token: CancellationToken) => void;
+    private body: (token: CancellationToken) => Promise<void>;
     private cancelTokenSource: CancellationTokenSource = new CancellationTokenSource();
     private cancelToken: CancellationToken = this.cancelTokenSource.token;
 
@@ -19,16 +19,16 @@ export class Task {
      *             when cancelation is requested. You should call
      *             token.finished() after async operation is done.
      */
-    constructor(uri: Uri, body: (token: CancellationToken) => void) {
+    constructor(uri: Uri, body: (token: CancellationToken) => Promise<void>) {
         this.uri = uri;
         this.body = body;
     }
 
-    public run(): void {
+    public async run(): Promise<void> {
         if (this.cancelToken.isCancellationRequested) return;
 
         const task = this;
-        return task.body(this.cancelToken);
+        return await task.body(this.cancelToken);
     }
 
     public cancel(): void {
@@ -60,11 +60,12 @@ export class TaskQueue {
 
     public cancel(uri: Uri): void {
         const uriString = uri.toString(true);
-        this.tasks.forEach(task => {
+
+        for (const task of this.tasks) {
             if (task.uri.toString(true) === uriString) {
                 task.cancel();
             }
-        });
+        }
     }
 
     public clear(): void {
@@ -87,7 +88,7 @@ export class TaskQueue {
             }
 
             try {
-                task.run();
+                await task.run();
             } catch (err) {
                 console.error('Error while running ameba:', err);
             } finally {
