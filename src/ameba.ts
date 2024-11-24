@@ -145,7 +145,7 @@ export class Ameba {
                             }
 
                             parsed.push(diag);
-                        });
+                        }
 
                         let diagnosticUri: Uri;
                         if (path.isAbsolute(source.path)) {
