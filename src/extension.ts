@@ -86,7 +86,7 @@ export function activate(context: ExtensionContext) {
 
     // This can happen when a file is open _or_ when a file's language id changes
     workspace.onDidOpenTextDocument(doc => {
-        if (ameba && doc.languageId === 'crystal') {
+        if (ameba && doc.languageId === 'crystal' && ameba.config.trigger !== LintTrigger.None) {
             if (isDocumentVirtual(doc)) {
                 if (ameba.config.trigger === LintTrigger.Type) {
                     outputChannel.appendLine(`[Open] Running ameba on ${getRelativePath(doc)}`);
