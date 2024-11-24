@@ -155,7 +155,8 @@ export class Ameba {
                             diagnosticUri = Uri.parse(path.join(dir, source.path));
                         }
 
-                        outputChannel.appendLine(`[Task] (${path.relative(dir, source.path)}) Found ${parsed.length} issues`)
+                        const logPath = path.relative(dir, diagnosticUri.fsPath)
+                        outputChannel.appendLine(`[Task] (${logPath}) Found ${parsed.length} issues`)
                         diagnostics.push([diagnosticUri, parsed]);
                     }
 
