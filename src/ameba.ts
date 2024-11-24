@@ -18,7 +18,6 @@ import { AmebaConfig, getConfig } from './configuration';
 import { Task, TaskQueue } from './taskQueue';
 import { outputChannel } from './extension';
 
-
 export class Ameba {
     private diag: DiagnosticCollection;
     private taskQueue: TaskQueue;
