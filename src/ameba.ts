@@ -113,7 +113,7 @@ export class Ameba {
 
                     const diagnostics: [Uri, Diagnostic[]][] = [];
 
-                    for (let source of results.sources) {
+                    for (const source of results.sources) {
                         if (!source.issues.length) continue;
 
                         let parsed: Diagnostic[] = [];
