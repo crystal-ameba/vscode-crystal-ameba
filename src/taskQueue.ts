@@ -69,9 +69,9 @@ export class TaskQueue {
     }
 
     public clear(): void {
-        this.tasks.forEach(task => {
+        for (const task of this.tasks) {
             task.cancel();
-        })
+        }
     }
 
     private async kick(): Promise<void> {
