@@ -33,7 +33,10 @@ export function activate(context: ExtensionContext) {
                         if (!enable) return;
                         ameba = new Ameba(diag);
                         const editor = window.activeTextEditor;
-                        if (editor) ameba.execute(editor.document);
+                        if (editor) {
+                            outputChannel.appendLine('[Enable] Running ameba on current document')
+                            ameba.execute(editor.document);
+                        }
                     },
                     _ => { }
                 );
