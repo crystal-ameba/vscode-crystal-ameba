@@ -82,7 +82,7 @@ export function activate(context: ExtensionContext) {
     });
 
     workspace.onDidSaveTextDocument(doc => {
-        if (ameba && doc.languageId === 'crystal' && !doc.isUntitled && doc.uri.scheme === 'file') {
+        if (ameba && ameba.config.onSave && doc.languageId === 'crystal' && !doc.isUntitled && doc.uri.scheme === 'file') {
             outputChannel.appendLine(`[Save] Running ameba on ${getRelativePath(doc)}`)
             ameba.execute(doc);
         }
