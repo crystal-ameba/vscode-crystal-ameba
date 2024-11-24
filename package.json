@@ -42,12 +42,25 @@
       {
         "command": "crystal.ameba.disable",
         "title": "Crystal Ameba: disable lints (workspace)"
+      },
+      {
+        "command": "crystal.ameba.lint-workspace",
+        "title": "Crystal Ameba: lint all files in workspace"
       }
     ],
     "configuration": {
       "type": "object",
       "title": "Crystal Ameba configuration",
       "properties": {
+        "crystal-ameba.lint-scope": {
+          "type": "string",
+          "description": "Whether the linter should only care about open files or all files in the workspace.",
+          "default": "file",
+          "enum": [
+            "file",
+            "workspace"
+          ]
+        },
         "crystal-ameba.lint-trigger": {
           "type": "string",
           "description": "When the linter should be executed. Set to `none` to disable automatic linting.",

@@ -10,7 +10,8 @@ import {
     TextDocument,
     Uri,
     window,
-    workspace
+    workspace,
+    WorkspaceFolder
 } from 'vscode';
 
 import { AmebaOutput } from './amebaOutput';
@@ -30,21 +31,28 @@ export class Ameba {
         this.config = getConfig();
     }
 
-    public execute(document: TextDocument, virtual: boolean = false): void {
-        if (document.languageId !== 'crystal') return;
-        if (documentIsVirtual(document) && !virtual) return;
+    public execute(document: TextDocument | WorkspaceFolder, virtual: boolean = false): void {
+        const isWorkspace = !('languageId' in document);
+        if (isWorkspace) virtual = false;
+
+        if (!isWorkspace) {
+            if (document.languageId !== 'crystal') return;
+            if (documentIsVirtual(document) && !virtual) return;
+        }
 
         const dir = (workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document.uri)).uri.fsPath;
 
         const args = [this.config.command, '--format', 'json'];
 
-        if (!virtual) {
-            args.push(document.fileName)
-        } else {
-            args.push('--stdin-filename', document.fileName);
+        if (!isWorkspace) {
+            if (!virtual) {
+                args.push(document.fileName)
+            } else {
+                args.push('--stdin-filename', document.fileName);
 
-            // Disabling these as they're common when typing
-            args.push('--except', 'Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace,Naming/Filename');
+                // Disabling these as they're common when typing
+                args.push('--except', 'Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace,Naming/Filename');
+            }
         }
 
         const configFile = path.join(dir, this.config.configFileName);
@@ -58,7 +66,7 @@ export class Ameba {
                 outputChannel.appendLine(`$ ${args.join(' ')}`)
                 const proc = spawn(args[0], args.slice(1), { cwd: dir });
 
-                if (virtual) {
+                if (virtual && !isWorkspace) {
                     const documentText: string = document.getText();
                     proc.stdin.write(documentText)
                     proc.stdin.end();
@@ -165,7 +173,7 @@ export class Ameba {
                         let diagnosticUri: Uri;
                         if (path.isAbsolute(source.path)) {
                             diagnosticUri = Uri.parse(source.path)
-                        } else if (document.isUntitled) {
+                        } else if (!isWorkspace && document.isUntitled) {
                             diagnosticUri = document.uri;
                         } else {
                             diagnosticUri = Uri.parse(path.join(dir, source.path));

@@ -6,7 +6,7 @@ import {
 import * as path from 'path'
 
 import { Ameba } from './ameba';
-import { getConfig, LintTrigger } from './configuration';
+import { getConfig, LintScope, LintTrigger } from './configuration';
 
 
 export const outputChannel = window.createOutputChannel("Crystal Ameba", "log")
@@ -41,6 +41,28 @@ export function activate(context: ExtensionContext) {
             }
         })
     );
+
+    context.subscriptions.push(
+        commands.registerCommand('crystal.ameba.lint-workspace', () => {
+            if (ameba) {
+                if (!ameba) return;
+                outputChannel.appendLine('[Lint] Running ameba on current workspace')
+                executeAmebaOnWorkspace(ameba)
+            } else {
+                window.showWarningMessage(
+                    'Ameba has been disabled for this workspace.',
+                    'Enable'
+                ).then(
+                    enable => {
+                        if (!enable) return;
+                        ameba = new Ameba(diag);
+                        executeAmebaOnWorkspace(ameba)
+                    },
+                    _ => { }
+                );
+            }
+        })
+    )
 
     context.subscriptions.push(
         commands.registerCommand('crystal.ameba.restart', () => {
@@ -111,7 +133,21 @@ export function activate(context: ExtensionContext) {
     });
 
     workspace.onDidCloseTextDocument(doc => {
-        ameba && ameba.clear(doc);
+        if (!ameba) return;
+        let shouldClear = false;
+
+        if (ameba.config.scope == LintScope.File) {
+            shouldClear = true;
+        } else if (workspace.workspaceFolders) {
+            shouldClear = !workspace.getWorkspaceFolder(doc.uri);
+        } else {
+            shouldClear = true;
+        }
+
+        if (shouldClear) {
+            outputChannel.appendLine(`[Clear] Clearing ${getRelativePath(doc)}`)
+            ameba.clear(doc);
+        }
     });
 }
 
@@ -120,13 +156,20 @@ export function deactivate() { }
 function executeAmebaOnWorkspace(ameba: Ameba | null) {
     if (!ameba) return;
 
-    workspace.textDocuments.forEach(doc => {
-        if (doc.languageId === 'crystal' && !doc.isUntitled &&
-            doc.uri.scheme === 'file' && !doc.isClosed) {
-            outputChannel.appendLine(`[Init] Running ameba on ${getRelativePath(doc)}`);
-            ameba.execute(doc);
-        }
-    });
+    if (ameba.config.scope === LintScope.File) {
+        workspace.textDocuments.forEach(doc => {
+            if (doc.languageId === 'crystal' && !doc.isUntitled &&
+                doc.uri.scheme === 'file' && !doc.isClosed) {
+                outputChannel.appendLine(`[Init] Running ameba on ${getRelativePath(doc)}`);
+                ameba.execute(doc);
+            }
+        });
+    } else {
+        workspace.workspaceFolders?.forEach(folder => {
+            outputChannel.appendLine(`[Init] Running ameba on ${folder.name}`);
+            ameba.execute(folder);
+        })
+    }
 }
 
 function getRelativePath(document: TextDocument): string {
