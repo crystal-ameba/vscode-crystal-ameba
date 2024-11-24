@@ -115,6 +115,7 @@ export class Ameba {
 
                     for (let source of results.sources) {
                         if (!source.issues.length) continue;
+
                         let parsed: Diagnostic[] = [];
 
                         source.issues.forEach(issue => {
