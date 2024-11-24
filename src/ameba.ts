@@ -99,7 +99,7 @@ export class Ameba {
                     try {
                         results = JSON.parse(stdout);
                     } catch (err) {
-                        console.error(`Ameba: failed parsing JSON: ${err}`);
+                        console.error('Ameba: failed parsing JSON:', err);
                         outputChannel.appendLine(`[Task] Error: failed to parse JSON:\n${stdout}`)
                         window.showErrorMessage('Ameba: failed to parse JSON response.');
                         reject(err);
