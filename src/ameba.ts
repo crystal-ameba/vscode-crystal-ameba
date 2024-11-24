@@ -60,7 +60,8 @@ export class Ameba {
                 })
 
                 proc.on('error', (err) => {
-                    console.error('Failed to start subprocess:', err);
+                    console.error('Ameba: failed to start subprocess:', err);
+                    outputChannel.appendLine(`[Task] Error: failed to start subprocess:\n${err}`)
                     window.showErrorMessage(`Failed to start Ameba: ${err.message}`)
                     reject(err);
                 })
