@@ -1,11 +1,7 @@
-import { Uri } from 'vscode';
+import { CancellationToken, CancellationTokenSource, Uri } from 'vscode';
 
-export interface TaskToken {
-    readonly isCanceled: boolean;
-    finished(): void;
-}
+import { outputChannel } from './extension';
 
-export type CancelCallback = () => void;
 
 /**
  * Task with async operation. It will be enqueued to and managed by
@@ -14,52 +10,29 @@ export type CancelCallback = () => void;
 export class Task {
     public readonly uri: Uri;
     public isEnqueued: boolean = false;
-    private body: (token: TaskToken) => CancelCallback;
-    private isCanceled: boolean = false;
-    private resolver?: () => void;
-    private onCancel?: CancelCallback;
+    private body: (token: CancellationToken) => Promise<void>;
+    private cancelTokenSource: CancellationTokenSource = new CancellationTokenSource();
+    private cancelToken: CancellationToken = this.cancelTokenSource.token;
 
     /**
      * @param body Function of task body, which returns callback called
      *             when cancelation is requested. You should call
      *             token.finished() after async operation is done.
      */
-    constructor(uri: Uri, body: (token: TaskToken) => CancelCallback) {
+    constructor(uri: Uri, body: (token: CancellationToken) => Promise<void>) {
         this.uri = uri;
         this.body = body;
     }
 
-    public run(): Promise<void> {
-        if (this.isCanceled) return Promise.resolve();
+    public async run(): Promise<void> {
+        if (this.cancelToken.isCancellationRequested) return;
 
         const task = this;
-        return new Promise(resolve => {
-            task.resolver = () => resolve();
-            const token = {
-                get isCanceled(): boolean {
-                    return task.isCanceled;
-                },
-
-                finished(): void {
-                    task.resolveOnce();
-                },
-            };
-            task.onCancel = this.body(token);
-        });
+        return await task.body(this.cancelToken);
     }
 
     public cancel(): void {
-        if (this.isCanceled) return;
-        this.isCanceled = true;
-        if (this.onCancel) this.onCancel();
-        this.resolveOnce();
-    }
-
-    private resolveOnce(): void {
-        if (this.resolver) {
-            this.resolver();
-            this.resolver = undefined;
-        }
+        this.cancelTokenSource.cancel()
     }
 }
 
@@ -87,11 +60,18 @@ export class TaskQueue {
 
     public cancel(uri: Uri): void {
         const uriString = uri.toString(true);
-        this.tasks.forEach(task => {
+
+        for (const task of this.tasks) {
             if (task.uri.toString(true) === uriString) {
                 task.cancel();
             }
-        });
+        }
+    }
+
+    public clear(): void {
+        this.tasks.forEach(task => {
+            task.cancel();
+        })
     }
 
     private async kick(): Promise<void> {
@@ -100,6 +80,8 @@ export class TaskQueue {
 
         while (true) {
             let task: Task | undefined = this.tasks[0];
+            outputChannel.appendLine(`[Task] ${this.tasks.length} tasks in queue`);
+
             if (!task) {
                 this.busy = false;
                 return;
@@ -109,8 +91,9 @@ export class TaskQueue {
                 await task.run();
             } catch (err) {
                 console.error('Error while running ameba:', err);
+            } finally {
+                this.tasks.shift();
             }
-            this.tasks.shift();
         }
     }
 }
