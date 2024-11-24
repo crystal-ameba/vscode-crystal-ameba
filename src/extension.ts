@@ -73,9 +73,7 @@ export function activate(context: ExtensionContext) {
         executeAmebaOnWorkspace(ameba)
     });
 
-    workspace.textDocuments.forEach(doc => {
-        ameba && ameba.execute(doc);
-    });
+    executeAmebaOnWorkspace(ameba);
 
     workspace.onDidOpenTextDocument(doc => {
         ameba && ameba.execute(doc);
