@@ -25,7 +25,7 @@ export class Task {
     }
 
     public async run(): Promise<void> {
-        if (this.cancelToken.isCancellationRequested) return;
+        if (this.cancelToken.isCancellationRequested) return Promise.resolve();
 
         const task = this;
         return await task.body(this.cancelToken);
