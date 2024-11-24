@@ -10,7 +10,8 @@ import {
     TextDocument,
     Uri,
     window,
-    workspace
+    workspace,
+    WorkspaceFolder
 } from 'vscode';
 
 import { AmebaOutput } from './amebaOutput';
@@ -29,9 +30,14 @@ export class Ameba {
         this.config = getConfig();
     }
 
-    public execute(document: TextDocument, virtual: boolean = false): void {
-        if (!isValidCrystalDocument(document)) return;
-        if (isDocumentVirtual(document) && !virtual) return;
+    public execute(document: TextDocument | WorkspaceFolder, virtual: boolean = false): void {
+        const isWorkspace = !('languageId' in document);
+        if (isWorkspace) virtual = false;
+
+        if (!isWorkspace) {
+            if (!isValidCrystalDocument(document)) return;
+            if (isDocumentVirtual(document) && !virtual) return;
+        }
 
         const dir = (workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document.uri)).uri.fsPath;
 
@@ -39,18 +45,20 @@ export class Ameba {
         const configFile = path.join(dir, this.config.configFileName);
         if (existsSync(configFile)) args.push('--config', configFile);
 
-        if (!virtual) {
-            args.push(document.fileName)
-        } else {
-            // Disabling these as they're common when typing
-            args.push('--except', 'Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace');
-
-            // Indicate that the source is passed through STDIN
-            if (document.uri.scheme === 'untitled') {
-                args.push('-')
+        if (!isWorkspace) {
+            if (!virtual) {
+                args.push(document.fileName)
             } else {
-                // Necessary to support excludes in ameba config
-                args.push('--stdin-filename', document.fileName);
+                // Disabling these as they're common when typing
+                args.push('--except', 'Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace');
+
+                // Indicate that the source is passed through STDIN
+                if (document.uri.scheme === 'untitled') {
+                    args.push('-')
+                } else {
+                    // Necessary to support excludes in ameba config
+                    args.push('--stdin-filename', document.fileName);
+                }
             }
         }
 
@@ -63,7 +71,7 @@ export class Ameba {
                 outputChannel.appendLine(`$ ${args.join(' ')}`)
                 const proc = spawn(args[0], args.slice(1), { cwd: dir });
 
-                if (virtual) {
+                if (virtual && !isWorkspace) {
                     const documentText: string = document.getText();
                     proc.stdin.write(documentText)
                     proc.stdin.end();

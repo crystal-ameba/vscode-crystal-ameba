@@ -7,7 +7,7 @@ import {
 import * as path from 'path'
 
 import { Ameba } from './ameba';
-import { getConfig, LintTrigger } from './configuration';
+import { getConfig, LintScope, LintTrigger } from './configuration';
 
 
 export let outputChannel: OutputChannel;
@@ -48,6 +48,28 @@ export function activate(context: ExtensionContext) {
             }
         })
     );
+
+    context.subscriptions.push(
+        commands.registerCommand('crystal.ameba.lint-workspace', () => {
+            if (ameba) {
+                if (!ameba) return;
+                outputChannel.appendLine('[Lint] Running ameba on current workspace')
+                executeAmebaOnWorkspace(ameba)
+            } else {
+                window.showWarningMessage(
+                    'Ameba has been disabled for this workspace.',
+                    'Enable'
+                ).then(
+                    enable => {
+                        if (!enable) return;
+                        ameba = new Ameba(diag);
+                        executeAmebaOnWorkspace(ameba)
+                    },
+                    _ => { }
+                );
+            }
+        })
+    )
 
     context.subscriptions.push(
         commands.registerCommand('crystal.ameba.restart', () => {
@@ -119,9 +141,11 @@ export function activate(context: ExtensionContext) {
 
     workspace.onDidCloseTextDocument(doc => {
         if (!ameba || !isValidCrystalDocument(doc)) return;
-        let shouldClear = true;
+        let shouldClear = false;
 
-        if (workspace.workspaceFolders) {
+        if (ameba.config.scope == LintScope.Workspace) {
+            shouldClear = true;
+        } else if (workspace.workspaceFolders) {
             shouldClear = !workspace.getWorkspaceFolder(doc.uri);
         }
 
@@ -146,17 +170,24 @@ export function deactivate() { }
 function executeAmebaOnWorkspace(ameba: Ameba | null) {
     if (!ameba || ameba.config.trigger === LintTrigger.None) return;
 
-    for (const doc of workspace.textDocuments) {
-        if (isValidCrystalDocument(doc)) {
-            if (isDocumentVirtual(doc)) {
-                if (ameba.config.trigger === LintTrigger.Type) {
+    if (ameba.config.scope === LintScope.File) {
+        for (const doc of workspace.textDocuments) {
+            if (isValidCrystalDocument(doc)) {
+                if (isDocumentVirtual(doc)) {
+                    if (ameba.config.trigger === LintTrigger.Type) {
+                        outputChannel.appendLine(`[Workspace] Running ameba on ${getRelativePath(doc)}`);
+                        ameba.execute(doc, true);
+                    }
+                } else {
                     outputChannel.appendLine(`[Workspace] Running ameba on ${getRelativePath(doc)}`);
-                    ameba.execute(doc, true);
+                    ameba.execute(doc);
                 }
-            } else {
-                outputChannel.appendLine(`[Workspace] Running ameba on ${getRelativePath(doc)}`);
-                ameba.execute(doc);
             }
+        };
+    } else if (workspace.workspaceFolders) {
+        for (const folder of workspace.workspaceFolders) {
+            outputChannel.appendLine(`[Workspace] Running ameba on ${folder.name}`);
+            ameba.execute(folder);
         }
     }
 }
