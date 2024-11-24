@@ -118,7 +118,7 @@ export class Ameba {
 
                         let parsed: Diagnostic[] = [];
 
-                        source.issues.forEach(issue => {
+                        for (const issue of source.issues) {
                             let start = issue.location;
                             let end = issue.end_location;
 
