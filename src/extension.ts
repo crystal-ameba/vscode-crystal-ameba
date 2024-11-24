@@ -93,7 +93,7 @@ export function activate(context: ExtensionContext) {
 export function deactivate() { }
 
 function getRelativePath(document: TextDocument): string {
-    const space: WorkspaceFolder = 
+    const space: WorkspaceFolder =
         workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document.uri)
     return path.relative(space.uri.fsPath, document.uri.fsPath)
 }
