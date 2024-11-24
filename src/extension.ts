@@ -59,6 +59,7 @@ export function activate(context: ExtensionContext) {
             } else {
                 outputChannel.appendLine('[Restart] Starting ameba')
                 ameba = new Ameba(diag);
+                executeAmebaOnWorkspace(ameba);
             }
         })
     );
@@ -74,12 +75,13 @@ export function activate(context: ExtensionContext) {
 
     workspace.onDidChangeConfiguration(_ => {
         if (!ameba) return;
+        outputChannel.appendLine(`[Config] Reloading diagnostics after config change`)
         ameba.config = getConfig();
+        ameba.clear()
+        executeAmebaOnWorkspace(ameba)
     });
 
-    workspace.textDocuments.forEach(doc => {
-        ameba && ameba.execute(doc);
-    });
+    executeAmebaOnWorkspace(ameba);
 
     workspace.onDidOpenTextDocument(doc => {
         ameba && ameba.execute(doc);
@@ -89,6 +91,10 @@ export function activate(context: ExtensionContext) {
         if (ameba && ameba.config.onSave && isValidCrystalDocument(doc)) {
             outputChannel.appendLine(`[Save] Running ameba on ${getRelativePath(doc)}`)
             ameba.execute(doc);
+        } else if (ameba && path.basename(doc.fileName) == ".ameba.yml") {
+            outputChannel.appendLine(`[Config] Reloading diagnostics after config file change`)
+            ameba.clear();
+            executeAmebaOnWorkspace(ameba);
         }
     });
 
@@ -98,6 +104,17 @@ export function activate(context: ExtensionContext) {
 }
 
 export function deactivate() { }
+
+function executeAmebaOnWorkspace(ameba: Ameba | null) {
+    if (!ameba) return;
+
+    workspace.textDocuments.forEach(doc => {
+        if (isValidCrystalDocument(doc)) {
+            outputChannel.appendLine(`[Init] Running ameba on ${getRelativePath(doc)}`);
+            ameba.execute(doc);
+        }
+    });
+}
 
 function getRelativePath(document: TextDocument): string {
     const space: WorkspaceFolder =
