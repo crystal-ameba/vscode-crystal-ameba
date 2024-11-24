@@ -56,7 +56,6 @@ export class TaskQueue {
         task.isEnqueued = true;
         this.tasks.push(task);
         this.kick();
-        outputChannel.appendLine(`[Task] ${this.tasks.length} tasks in queue`)
     }
 
     public cancel(uri: Uri): void {
@@ -80,6 +79,8 @@ export class TaskQueue {
 
         while (true) {
             let task: Task | undefined = this.tasks[0];
+            outputChannel.appendLine(`[Task] ${this.tasks.length} tasks in queue`);
+
             if (!task) {
                 this.busy = false;
                 return;
