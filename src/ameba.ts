@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { spawn } from 'child_process';
 import * as path from 'path';
 import { existsSync } from 'fs';
 import {
@@ -12,9 +12,11 @@ import {
     window,
     workspace
 } from 'vscode';
+
 import { AmebaOutput } from './amebaOutput';
 import { AmebaConfig, getConfig } from './configuration';
 import { Task, TaskQueue } from './taskQueue';
+import { outputChannel } from './extension';
 
 export class Ameba {
     private diag: DiagnosticCollection;
@@ -38,74 +40,132 @@ export class Ameba {
         if (existsSync(configFile)) args.push('--config', configFile);
 
         const task = new Task(document.uri, token => {
-            const proc = exec(args.join(' '), (err, stdout, stderr) => {
-                if (token.isCanceled) return;
-                this.diag.delete(document.uri);
+            return new Promise((resolve, reject) => {
+                let stdoutArr: string[] = [];
+                let stderrArr: string[] = [];
 
-                if (err && stderr.length) {
-                    if ((process.platform == 'win32' && err.code === 1) || err.code === 127) {
-                        window.showErrorMessage(
-                            `Could not execute Ameba file${args[0] === 'ameba' ? '.' : ` at ${args[0]}`}`,
-                            'Disable (workspace)'
-                        ).then(
-                            disable => disable && commands.executeCommand('crystal.ameba.disable'),
-                            _ => { }
-                        );
-                    } else {
-                        window.showErrorMessage(stderr);
+                outputChannel.appendLine(`$ ${args.join(' ')}`)
+                const proc = spawn(args[0], args.slice(1), { cwd: dir });
+
+                token.onCancellationRequested(_ => {
+                    proc.kill();
+                })
+
+                proc.stdout.on('data', (data) => {
+                    stdoutArr.push(data.toString());
+                })
+
+                proc.stderr.on('data', (data) => {
+                    stderrArr.push(data.toString());
+                })
+
+                proc.on('error', (err) => {
+                    console.error('Ameba: failed to start subprocess:', err);
+                    outputChannel.appendLine(`[Task] Error: failed to start subprocess:\n${err}`)
+                    window.showErrorMessage(`Failed to start Ameba: ${err.message}`)
+                    reject(err);
+                })
+
+                proc.on('close', (code) => {
+                    if (token.isCancellationRequested) {
+                        resolve();
+                        return;
                     }
-                    return;
-                }
 
-                let results: AmebaOutput;
-                try {
-                    results = JSON.parse(stdout);
-                } catch (err) {
-                    console.error(`Ameba: failed parsing JSON: ${err}`);
-                    window.showErrorMessage('Ameba: failed to parse JSON response.');
-                    return;
-                }
+                    this.diag.delete(document.uri);
 
-                if (!results.summary.issues_count) return;
-                const diagnostics: [Uri, Diagnostic[]][] = [];
+                    const stdout = stdoutArr.join('')
+                    const stderr = stderrArr.join('')
 
-                for (let source of results.sources) {
-                    if (!source.issues.length) continue;
-                    let parsed: Diagnostic[] = [];
-
-                    source.issues.forEach(issue => {
-                        let start = issue.location;
-                        let end = issue.end_location;
-                        if (!end.line || !end.column) {
-                            end = start;
-                        }
-                        const range = new Range(
-                            start.line - 1,
-                            start.column - 1,
-                            end.line - 1,
-                            end.column
-                        );
-
-                        const diag = new Diagnostic(
-                            range,
-                            `[${issue.rule_name}] ${issue.message}`,
-                            this.parseSeverity(issue.severity)
-                        );
-                        diag.code = {
-                            value: "Docs",
-                            target: Uri.parse(`https://crystaldoc.info/github/crystal-ameba/ameba/v${results.metadata.ameba_version}/Ameba/Rule/${issue.rule_name}.html`)
+                    if (code !== 0 && stderr.length) {
+                        if ((process.platform == 'win32' && code === 1) || code === 127) {
+                            window.showErrorMessage(
+                                `Could not execute Ameba file${args[0] === 'ameba' ? '.' : ` at ${args[0]}`}`,
+                                'Disable (workspace)'
+                            ).then(
+                                disable => disable && commands.executeCommand('crystal.ameba.disable'),
+                                _ => { }
+                            );
+                        } else {
+                            window.showErrorMessage(stderr);
                         }
 
-                        parsed.push(diag);
-                    });
+                        reject(new Error(stderr));
+                        return;
+                    }
 
-                    diagnostics.push([document.uri, parsed]);
-                }
+                    let results: AmebaOutput;
 
-                this.diag.set(diagnostics);
-            });
+                    try {
+                        results = JSON.parse(stdout);
+                    } catch (err) {
+                        console.error('Ameba: failed parsing JSON:', err);
+                        outputChannel.appendLine(`[Task] Error: failed to parse JSON:\n${stdout}`)
+                        window.showErrorMessage('Ameba: failed to parse JSON response.');
+                        reject(err);
+                        return;
+                    }
 
-            return () => proc.kill();
+                    if (!results.summary.issues_count) {
+                        resolve();
+                        return;
+                    }
+
+                    const diagnostics: [Uri, Diagnostic[]][] = [];
+
+                    for (const source of results.sources) {
+                        if (!source.issues.length) continue;
+
+                        let parsed: Diagnostic[] = [];
+
+                        for (const issue of source.issues) {
+                            let start = issue.location;
+                            let end = issue.end_location;
+
+                            if (!end.line || !end.column) {
+                                end = start;
+                            }
+
+                            const range = new Range(
+                                start.line - 1,
+                                start.column - 1,
+                                end.line - 1,
+                                end.column
+                            );
+
+                            const diag = new Diagnostic(
+                                range,
+                                `[${issue.rule_name}] ${issue.message}`,
+                                this.parseSeverity(issue.severity)
+                            );
+
+                            diag.code = {
+                                value: "Docs",
+                                target: Uri.parse(`https://crystaldoc.info/github/crystal-ameba/ameba/v${results.metadata.ameba_version}/Ameba/Rule/${issue.rule_name}.html`)
+                            }
+
+                            parsed.push(diag);
+                        }
+
+                        let diagnosticUri: Uri;
+                        if (path.isAbsolute(source.path)) {
+                            diagnosticUri = Uri.parse(source.path)
+                        } else if (document.isUntitled) {
+                            diagnosticUri = document.uri;
+                        } else {
+                            diagnosticUri = Uri.parse(path.join(dir, source.path));
+                        }
+
+                        const logPath = path.relative(dir, diagnosticUri.fsPath)
+                        outputChannel.appendLine(`[Task] (${logPath}) Found ${parsed.length} issues`)
+                        diagnostics.push([diagnosticUri, parsed]);
+                    }
+
+                    this.diag.set(diagnostics);
+                    outputChannel.appendLine('[Task] Done!')
+                    resolve();
+                });
+            })
         });
 
         this.taskQueue.enqueue(task);
@@ -124,11 +184,16 @@ export class Ameba {
         }
     }
 
-    public clear(document: TextDocument): void {
-        let uri = document.uri;
-        if (uri.scheme === 'file') {
-            this.taskQueue.cancel(uri);
-            this.diag.delete(uri);
+    public clear(document: TextDocument | null = null): void {
+        if (document) {
+            let uri = document.uri;
+            if (uri.scheme === 'file') {
+                this.taskQueue.cancel(uri);
+                this.diag.delete(uri);
+            }
+        } else {
+            this.taskQueue.clear();
+            this.diag.clear();
         }
     }
 }
