@@ -86,7 +86,7 @@ export function activate(context: ExtensionContext) {
     });
 
     workspace.onDidSaveTextDocument(doc => {
-        if (ameba && ameba.config.onSave && validDidSaveDocument(doc)) {
+        if (ameba && ameba.config.onSave && isValidCrystalDocument(doc)) {
             outputChannel.appendLine(`[Save] Running ameba on ${getRelativePath(doc)}`)
             ameba.execute(doc);
         }
