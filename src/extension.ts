@@ -1,5 +1,6 @@
 import {
     commands, ExtensionContext, languages,
+    OutputChannel,
     TextDocument, Uri, window,
     workspace, WorkspaceFolder
 } from 'vscode';
@@ -9,9 +10,12 @@ import { Ameba } from './ameba';
 import { getConfig } from './configuration';
 
 
-export const outputChannel = window.createOutputChannel("Crystal Ameba", "log")
+export let outputChannel: OutputChannel;
 
 export function activate(context: ExtensionContext) {
+    outputChannel = window.createOutputChannel("Crystal Ameba", "log");
+    context.subscriptions.push(outputChannel);
+
     const diag = languages.createDiagnosticCollection('crystal');
     let ameba: Ameba | null = new Ameba(diag);
     context.subscriptions.push(diag);
@@ -82,7 +86,7 @@ export function activate(context: ExtensionContext) {
     });
 
     workspace.onDidSaveTextDocument(doc => {
-        if (ameba && ameba.config.onSave && doc.languageId === 'crystal' && !doc.isUntitled && doc.uri.scheme === 'file') {
+        if (ameba && ameba.config.onSave && validDidSaveDocument(doc)) {
             outputChannel.appendLine(`[Save] Running ameba on ${getRelativePath(doc)}`)
             ameba.execute(doc);
         }
@@ -107,4 +111,8 @@ export function noWorkspaceFolder(uri: Uri): WorkspaceFolder {
         name: path.basename(path.dirname(uri.fsPath)),
         index: -1
     }
+}
+
+function validDidSaveDocument(doc: TextDocument): boolean {
+    return doc.languageId === 'crystal' && !doc.isUntitled && doc.uri.scheme === 'file'
 }
