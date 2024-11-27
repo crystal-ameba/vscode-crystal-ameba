@@ -113,6 +113,6 @@ export function noWorkspaceFolder(uri: Uri): WorkspaceFolder {
     }
 }
 
-function validDidSaveDocument(doc: TextDocument): boolean {
+function isValidCrystalDocument(doc: TextDocument): boolean {
     return doc.languageId === 'crystal' && !doc.isUntitled && doc.uri.scheme === 'file'
 }
