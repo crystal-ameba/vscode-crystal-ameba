@@ -110,7 +110,7 @@ function executeAmebaOnWorkspace(ameba: Ameba | null) {
 
     for (const doc of workspace.textDocuments) {
         if (isValidCrystalDocument(doc)) {
-            outputChannel.appendLine(`[Init] Running ameba on ${getRelativePath(doc)}`);
+            outputChannel.appendLine(`[Workspace] Running ameba on ${getRelativePath(doc)}`);
             ameba.execute(doc);
         }
     }
