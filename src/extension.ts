@@ -108,12 +108,12 @@ export function deactivate() { }
 function executeAmebaOnWorkspace(ameba: Ameba | null) {
     if (!ameba) return;
 
-    workspace.textDocuments.forEach(doc => {
+    for (const doc of workspace.textDocuments) {
         if (isValidCrystalDocument(doc)) {
             outputChannel.appendLine(`[Init] Running ameba on ${getRelativePath(doc)}`);
             ameba.execute(doc);
         }
-    });
+    }
 }
 
 function getRelativePath(document: TextDocument): string {
