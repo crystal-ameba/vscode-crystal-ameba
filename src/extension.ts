@@ -100,7 +100,7 @@ export function activate(context: ExtensionContext) {
     });
 
     workspace.onDidChangeTextDocument(e => {
-        if (ameba && ameba.config.trigger == LintTrigger.Type && e.document.languageId === 'crystal') {
+        if (ameba && ameba.config.trigger == LintTrigger.Type && isCrystalDocument(e.document)) {
             outputChannel.appendLine(`[Change] Running ameba on ${getRelativePath(e.document)}`);
             ameba.execute(e.document, true);
         }
