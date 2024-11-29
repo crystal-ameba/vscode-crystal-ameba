@@ -149,8 +149,8 @@ export function noWorkspaceFolder(uri: Uri): WorkspaceFolder {
     }
 }
 
-function isValidCrystalDocument(doc: TextDocument): boolean {
-    return doc.languageId === 'crystal' && !doc.isUntitled && doc.uri.scheme === 'file'
+function isCrystalDocument(doc: TextDocument): boolean {
+    return doc.languageId === 'crystal'
 }
 
 export function isDocumentVirtual(document: TextDocument): boolean {
