@@ -30,7 +30,7 @@ export class Ameba {
     }
 
     public execute(document: TextDocument, virtual: boolean = false): void {
-        if (document.languageId !== 'crystal') return;
+        if (!isCrystalDocument(document)) return;
         if (isDocumentVirtual(document) && !virtual) return;
 
         const dir = (workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document.uri)).uri.fsPath;
