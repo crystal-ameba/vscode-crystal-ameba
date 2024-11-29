@@ -6,7 +6,6 @@ import { execSync } from 'child_process';
 
 import { outputChannel } from './extension';
 
-
 export interface AmebaConfig {
     command: string;
     configFileName: string;
