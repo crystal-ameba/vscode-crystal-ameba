@@ -107,7 +107,7 @@ export function activate(context: ExtensionContext) {
     })
 
     workspace.onDidSaveTextDocument(doc => {
-        if (ameba && ameba.config.trigger === LintTrigger.Save && isValidCrystalDocument(doc)) {
+        if (ameba && ameba.config.trigger === LintTrigger.Save && isCrystalDocument(doc)) {
             outputChannel.appendLine(`[Save] Running ameba on ${getRelativePath(doc)}`)
             ameba.execute(doc);
         } else if (ameba && path.basename(doc.fileName) == ".ameba.yml") {
@@ -128,7 +128,7 @@ function executeAmebaOnWorkspace(ameba: Ameba | null) {
     if (!ameba) return;
 
     for (const doc of workspace.textDocuments) {
-        if (isValidCrystalDocument(doc)) {
+        if (isCrystalDocument(doc)) {
             outputChannel.appendLine(`[Workspace] Running ameba on ${getRelativePath(doc)}`);
             ameba.execute(doc);
         }
@@ -149,7 +149,7 @@ export function noWorkspaceFolder(uri: Uri): WorkspaceFolder {
     }
 }
 
-function isCrystalDocument(doc: TextDocument): boolean {
+export function isCrystalDocument(doc: TextDocument): boolean {
     return doc.languageId === 'crystal'
 }
 
