@@ -40,7 +40,8 @@ export class Ameba {
         if (!virtual) {
             args.push(document.fileName)
         } else {
-            args.push('--stdin-filename', document.fileName);
+            // Indicate that the source is passed through STDIN
+            args.push('-');
 
             // Disabling these as they're common when typing
             args.push('--except', 'Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace,Naming/Filename');
@@ -164,7 +165,9 @@ export class Ameba {
                         }
 
                         let diagnosticUri: Uri;
-                        if (path.isAbsolute(source.path)) {
+                        if (virtual) {
+                            diagnosticUri = document.uri;
+                        } else if (path.isAbsolute(source.path)) {
                             diagnosticUri = Uri.parse(source.path)
                         } else if (document.isUntitled) {
                             diagnosticUri = document.uri;
