@@ -102,7 +102,7 @@ export function activate(context: ExtensionContext) {
     workspace.onDidChangeTextDocument(e => {
         if (ameba && ameba.config.trigger == LintTrigger.Type && isCrystalDocument(e.document)) {
             outputChannel.appendLine(`[Change] Running ameba on ${getRelativePath(e.document)}`);
-            ameba.execute(e.document, true);
+            ameba.execute(e.document, isDocumentVirtual(e.document));
         }
     })
 
@@ -110,7 +110,7 @@ export function activate(context: ExtensionContext) {
         if (ameba && ameba.config.trigger === LintTrigger.Save && isCrystalDocument(doc)) {
             outputChannel.appendLine(`[Save] Running ameba on ${getRelativePath(doc)}`)
             ameba.execute(doc);
-        } else if (ameba && path.basename(doc.fileName) == ".ameba.yml") {
+        } else if (ameba && ameba.config.trigger !== LintTrigger.None && path.basename(doc.fileName) == ".ameba.yml") {
             outputChannel.appendLine(`[Config] Reloading diagnostics after config file change`)
             ameba.clear();
             executeAmebaOnWorkspace(ameba);
@@ -129,8 +129,15 @@ function executeAmebaOnWorkspace(ameba: Ameba | null) {
 
     for (const doc of workspace.textDocuments) {
         if (isCrystalDocument(doc)) {
-            outputChannel.appendLine(`[Workspace] Running ameba on ${getRelativePath(doc)}`);
-            ameba.execute(doc);
+            if (isDocumentVirtual(doc)) {
+                if (ameba.config.trigger === LintTrigger.Type) {
+                    outputChannel.appendLine(`[Workspace] Running ameba on ${getRelativePath(doc)}`);
+                    ameba.execute(doc, true);
+                }
+            } else {
+                outputChannel.appendLine(`[Workspace] Running ameba on ${getRelativePath(doc)}`);
+                ameba.execute(doc);
+            }
         }
     }
 }
