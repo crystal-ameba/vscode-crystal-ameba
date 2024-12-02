@@ -44,7 +44,7 @@ export class Ameba {
             args.push('-');
 
             // Disabling these as they're common when typing
-            args.push('--except', 'Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace,Naming/Filename');
+            args.push('--except', 'Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace');
         }
 
         const configFile = path.join(dir, this.config.configFileName);
@@ -169,8 +169,6 @@ export class Ameba {
                             diagnosticUri = document.uri;
                         } else if (path.isAbsolute(source.path)) {
                             diagnosticUri = Uri.parse(source.path)
-                        } else if (document.isUntitled) {
-                            diagnosticUri = document.uri;
                         } else {
                             diagnosticUri = Uri.parse(path.join(dir, source.path));
                         }
