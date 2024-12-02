@@ -125,7 +125,7 @@ export function activate(context: ExtensionContext) {
 export function deactivate() { }
 
 function executeAmebaOnWorkspace(ameba: Ameba | null) {
-    if (!ameba) return;
+    if (!ameba || ameba.config.trigger === LintTrigger.None) return;
 
     for (const doc of workspace.textDocuments) {
         if (isCrystalDocument(doc)) {
