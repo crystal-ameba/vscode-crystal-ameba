@@ -40,11 +40,11 @@ export class Ameba {
         if (!virtual) {
             args.push(document.fileName)
         } else {
-            // Indicate that the source is passed through STDIN
-            args.push('-');
-
             // Disabling these as they're common when typing
             args.push('--except', 'Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace');
+
+            // Indicate that the source is passed through STDIN
+            args.push('-');
         }
 
         const configFile = path.join(dir, this.config.configFileName);
