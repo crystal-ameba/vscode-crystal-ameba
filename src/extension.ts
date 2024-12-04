@@ -141,14 +141,10 @@ export function activate(context: ExtensionContext) {
 
     workspace.onDidCloseTextDocument(doc => {
         if (!ameba) return;
-        let shouldClear = false;
+        let shouldClear = true;
 
-        if (ameba.config.scope == LintScope.File) {
-            shouldClear = true;
-        } else if (workspace.workspaceFolders) {
+        if (workspace.workspaceFolders) {
             shouldClear = !workspace.getWorkspaceFolder(doc.uri);
-        } else {
-            shouldClear = true;
         }
 
         if (shouldClear) {
