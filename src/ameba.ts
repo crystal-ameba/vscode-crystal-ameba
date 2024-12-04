@@ -31,10 +31,11 @@ export class Ameba {
     }
 
     public execute(document: TextDocument | WorkspaceFolder, virtual: boolean = false): void {
-        const isWorkspace = !('languageId' in document);
-        if (isWorkspace) virtual = false;
+        // This check is to see if `document` conforms to the `TextDocument` or `WorkspaceFolder` interfaces
+        const isDocument = ('languageId' in document);
+        if (!isDocument) virtual = false;
 
-        if (!isWorkspace) {
+        if (isDocument) {
             if (!isCrystalDocument(document)) return;
             if (isDocumentVirtual(document) && !virtual) return;
         }
@@ -43,7 +44,7 @@ export class Ameba {
 
         const args = [this.config.command, '--format', 'json'];
 
-        if (!isWorkspace) {
+        if (isDocument) {
             if (!virtual) {
                 args.push(document.fileName)
             } else {
@@ -66,7 +67,7 @@ export class Ameba {
                 outputChannel.appendLine(`$ ${args.join(' ')}`)
                 const proc = spawn(args[0], args.slice(1), { cwd: dir });
 
-                if (virtual && !isWorkspace) {
+                if (virtual && isDocument) {
                     const documentText: string = document.getText();
                     proc.stdin.write(documentText)
                     proc.stdin.end();
