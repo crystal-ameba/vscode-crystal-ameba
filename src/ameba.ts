@@ -16,7 +16,7 @@ import {
 import { AmebaOutput } from './amebaOutput';
 import { AmebaConfig, getConfig } from './configuration';
 import { Task, TaskQueue } from './taskQueue';
-import { outputChannel } from './extension';
+import { isCrystalDocument, isDocumentVirtual, noWorkspaceFolder, outputChannel } from './extension';
 
 export class Ameba {
     private diag: DiagnosticCollection;
@@ -29,13 +29,24 @@ export class Ameba {
         this.config = getConfig();
     }
 
-    public execute(document: TextDocument): void {
-        if (document.languageId !== 'crystal' || document.isUntitled || document.uri.scheme !== 'file') {
-            return;
+    public execute(document: TextDocument, virtual: boolean = false): void {
+        if (!isCrystalDocument(document)) return;
+        if (isDocumentVirtual(document) && !virtual) return;
+
+        const dir = (workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document.uri)).uri.fsPath;
+
+        const args = [this.config.command, '--format', 'json'];
+
+        if (!virtual) {
+            args.push(document.fileName)
+        } else {
+            // Disabling these as they're common when typing
+            args.push('--except', 'Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace');
+
+            // Indicate that the source is passed through STDIN
+            args.push('-');
         }
 
-        const args = [this.config.command, document.fileName, '--format', 'json'];
-        const dir = workspace.getWorkspaceFolder(document.uri)!.uri.fsPath;
         const configFile = path.join(dir, this.config.configFileName);
         if (existsSync(configFile)) args.push('--config', configFile);
 
@@ -46,6 +57,12 @@ export class Ameba {
 
                 outputChannel.appendLine(`$ ${args.join(' ')}`)
                 const proc = spawn(args[0], args.slice(1), { cwd: dir });
+
+                if (virtual) {
+                    const documentText: string = document.getText();
+                    proc.stdin.write(documentText)
+                    proc.stdin.end();
+                }
 
                 token.onCancellationRequested(_ => {
                     proc.kill();
@@ -148,10 +165,10 @@ export class Ameba {
                         }
 
                         let diagnosticUri: Uri;
-                        if (path.isAbsolute(source.path)) {
-                            diagnosticUri = Uri.parse(source.path)
-                        } else if (document.isUntitled) {
+                        if (virtual) {
                             diagnosticUri = document.uri;
+                        } else if (path.isAbsolute(source.path)) {
+                            diagnosticUri = Uri.parse(source.path)
                         } else {
                             diagnosticUri = Uri.parse(path.join(dir, source.path));
                         }
