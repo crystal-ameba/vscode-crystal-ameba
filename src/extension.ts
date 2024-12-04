@@ -141,11 +141,9 @@ export function activate(context: ExtensionContext) {
 
     workspace.onDidCloseTextDocument(doc => {
         if (!ameba || !isValidCrystalDocument(doc)) return;
-        let shouldClear = false;
+        let shouldClear = true;
 
-        if (ameba.config.scope == LintScope.Workspace) {
-            shouldClear = true;
-        } else if (workspace.workspaceFolders) {
+        if (workspace.workspaceFolders) {
             shouldClear = !workspace.getWorkspaceFolder(doc.uri);
         }
 
