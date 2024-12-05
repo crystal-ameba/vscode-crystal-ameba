@@ -31,9 +31,9 @@ export class Ameba {
     }
 
     public execute(document: TextDocument | WorkspaceFolder, virtual: boolean = false): void {
-        if (!this.isTextDocument(document)) virtual = false;
-
-        if (this.isTextDocument(document)) {
+        if (!this.isTextDocument(document)) {
+            virtual = false;
+       } else {
             if (!isValidCrystalDocument(document)) return;
             if (isDocumentVirtual(document) && !virtual) return;
         }
