@@ -31,11 +31,9 @@ export class Ameba {
     }
 
     public execute(document: TextDocument | WorkspaceFolder, virtual: boolean = false): void {
-        // This check is to see if `document` conforms to the `TextDocument` or `WorkspaceFolder` interfaces
-        const isDocument = ('languageId' in document);
-        if (!isDocument) virtual = false;
+        if (!this.isTextDocument(document)) virtual = false;
 
-        if (isDocument) {
+        if (this.isTextDocument(document)) {
             if (!isCrystalDocument(document)) return;
             if (isDocumentVirtual(document) && !virtual) return;
         }
@@ -44,7 +42,7 @@ export class Ameba {
 
         const args = [this.config.command, '--format', 'json'];
 
-        if (isDocument) {
+        if (this.isTextDocument(document)) {
             if (!virtual) {
                 args.push(document.fileName)
             } else {
@@ -67,7 +65,7 @@ export class Ameba {
                 outputChannel.appendLine(`$ ${args.join(' ')}`)
                 const proc = spawn(args[0], args.slice(1), { cwd: dir });
 
-                if (virtual && isDocument) {
+                if (virtual && this.isTextDocument(document)) {
                     const documentText: string = document.getText();
                     proc.stdin.write(documentText)
                     proc.stdin.end();
@@ -221,5 +219,9 @@ export class Ameba {
             this.taskQueue.clear();
             this.diag.clear();
         }
+    }
+
+    isTextDocument(document: TextDocument | WorkspaceFolder): document is TextDocument {
+        return (document as TextDocument).languageId !== undefined;
     }
 }
