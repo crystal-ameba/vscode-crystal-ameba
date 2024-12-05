@@ -118,7 +118,17 @@ export function activate(context: ExtensionContext) {
     });
 
     workspace.onDidCloseTextDocument(doc => {
-        ameba && ameba.clear(doc.uri);
+        if (!ameba || !isCrystalDocument(doc)) return;
+        let shouldClear = true;
+
+        if (workspace.workspaceFolders) {
+            shouldClear = !workspace.getWorkspaceFolder(doc.uri);
+        }
+
+        if (shouldClear) {
+            outputChannel.appendLine(`[Clear] Clearing ${getRelativePath(doc)}`)
+            ameba.clear(doc.uri);
+        }
     });
 
     workspace.onDidDeleteFiles(e => {
@@ -152,12 +162,21 @@ function executeAmebaOnWorkspace(ameba: Ameba | null) {
 }
 
 function getRelativePath(document: TextDocument): string {
+    if (document.uri.scheme === 'untitled') {
+        return document.fileName
+    }
+
     const space: WorkspaceFolder =
         workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document.uri)
     return path.relative(space.uri.fsPath, document.uri.fsPath)
 }
 
 export function noWorkspaceFolder(uri: Uri): WorkspaceFolder {
+    const firstWorkspaceFolder = workspace.workspaceFolders?.at(0);
+    if (uri.scheme === 'untitled' && firstWorkspaceFolder) {
+        return firstWorkspaceFolder
+    }
+
     return {
         uri: Uri.parse(path.dirname(uri.fsPath)),
         name: path.basename(path.dirname(uri.fsPath)),
@@ -166,9 +185,9 @@ export function noWorkspaceFolder(uri: Uri): WorkspaceFolder {
 }
 
 export function isCrystalDocument(doc: TextDocument): boolean {
-    return doc.languageId === 'crystal'
+    return doc.languageId === 'crystal' && (doc.uri.scheme === 'file' || doc.uri.scheme === 'untitled')
 }
 
 export function isDocumentVirtual(document: TextDocument): boolean {
-    return document.isDirty || document.isUntitled || document.uri.scheme !== 'file'
+    return document.isDirty || document.isUntitled || document.uri.scheme === 'untitled'
 }
