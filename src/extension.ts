@@ -7,7 +7,7 @@ import {
 import * as path from 'path'
 
 import { Ameba } from './ameba';
-import { getConfig, LintTrigger } from './configuration';
+import { getConfig, LintScope, LintTrigger } from './configuration';
 
 
 export let outputChannel: OutputChannel;
@@ -48,6 +48,28 @@ export function activate(context: ExtensionContext) {
             }
         })
     );
+
+    context.subscriptions.push(
+        commands.registerCommand('crystal.ameba.lint-workspace', () => {
+            if (ameba) {
+                if (!ameba) return;
+                outputChannel.appendLine('[Lint] Running ameba on current workspace')
+                executeAmebaOnWorkspace(ameba)
+            } else {
+                window.showWarningMessage(
+                    'Ameba has been disabled for this workspace.',
+                    'Enable'
+                ).then(
+                    enable => {
+                        if (!enable) return;
+                        ameba = new Ameba(diag);
+                        executeAmebaOnWorkspace(ameba)
+                    },
+                    _ => { }
+                );
+            }
+        })
+    )
 
     context.subscriptions.push(
         commands.registerCommand('crystal.ameba.restart', () => {
@@ -118,7 +140,17 @@ export function activate(context: ExtensionContext) {
     });
 
     workspace.onDidCloseTextDocument(doc => {
-        ameba && ameba.clear(doc);
+        if (!ameba || !isCrystalDocument(doc)) return;
+        let shouldClear = true;
+
+        if (workspace.workspaceFolders) {
+            shouldClear = !workspace.getWorkspaceFolder(doc.uri);
+        }
+
+        if (shouldClear) {
+            outputChannel.appendLine(`[Clear] Clearing ${getRelativePath(doc)}`)
+            ameba.clear(doc);
+        }
     });
 }
 
@@ -127,28 +159,44 @@ export function deactivate() { }
 function executeAmebaOnWorkspace(ameba: Ameba | null) {
     if (!ameba || ameba.config.trigger === LintTrigger.None) return;
 
-    for (const doc of workspace.textDocuments) {
-        if (isCrystalDocument(doc)) {
-            if (isDocumentVirtual(doc)) {
-                if (ameba.config.trigger === LintTrigger.Type) {
+    if (ameba.config.scope === LintScope.File) {
+        for (const doc of workspace.textDocuments) {
+            if (isCrystalDocument(doc)) {
+                if (isDocumentVirtual(doc)) {
+                    if (ameba.config.trigger === LintTrigger.Type) {
+                        outputChannel.appendLine(`[Workspace] Running ameba on ${getRelativePath(doc)}`);
+                        ameba.execute(doc, true);
+                    }
+                } else {
                     outputChannel.appendLine(`[Workspace] Running ameba on ${getRelativePath(doc)}`);
-                    ameba.execute(doc, true);
+                    ameba.execute(doc);
                 }
-            } else {
-                outputChannel.appendLine(`[Workspace] Running ameba on ${getRelativePath(doc)}`);
-                ameba.execute(doc);
             }
+        };
+    } else if (workspace.workspaceFolders) {
+        for (const folder of workspace.workspaceFolders) {
+            outputChannel.appendLine(`[Workspace] Running ameba on ${folder.name}`);
+            ameba.execute(folder);
         }
     }
 }
 
 function getRelativePath(document: TextDocument): string {
+    if (document.uri.scheme === 'untitled') {
+        return document.fileName
+    }
+
     const space: WorkspaceFolder =
         workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document.uri)
     return path.relative(space.uri.fsPath, document.uri.fsPath)
 }
 
 export function noWorkspaceFolder(uri: Uri): WorkspaceFolder {
+    const firstWorkspaceFolder = workspace.workspaceFolders?.at(0);
+    if (uri.scheme === 'untitled' && firstWorkspaceFolder) {
+        return firstWorkspaceFolder
+    }
+
     return {
         uri: Uri.parse(path.dirname(uri.fsPath)),
         name: path.basename(path.dirname(uri.fsPath)),
@@ -157,9 +205,9 @@ export function noWorkspaceFolder(uri: Uri): WorkspaceFolder {
 }
 
 export function isCrystalDocument(doc: TextDocument): boolean {
-    return doc.languageId === 'crystal'
+    return doc.languageId === 'crystal' && (doc.uri.scheme === 'file' || doc.uri.scheme === 'untitled')
 }
 
 export function isDocumentVirtual(document: TextDocument): boolean {
-    return document.isDirty || document.isUntitled || document.uri.scheme !== 'file'
+    return document.isDirty || document.isUntitled || document.uri.scheme === 'untitled'
 }
