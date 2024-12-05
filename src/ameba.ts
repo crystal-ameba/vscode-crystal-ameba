@@ -33,7 +33,7 @@ export class Ameba {
     public execute(document: TextDocument | WorkspaceFolder, virtual: boolean = false): void {
         if (!this.isTextDocument(document)) {
             virtual = false;
-       } else {
+        } else {
             if (!isCrystalDocument(document)) return;
             if (isDocumentVirtual(document) && !virtual) return;
         }
@@ -41,6 +41,9 @@ export class Ameba {
         const dir = (workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document.uri)).uri.fsPath;
 
         const args = [this.config.command, '--format', 'json'];
+
+        const configFile = path.join(dir, this.config.configFileName);
+        if (existsSync(configFile)) args.push('--config', configFile);
 
         if (this.isTextDocument(document)) {
             if (!virtual) {
@@ -50,12 +53,14 @@ export class Ameba {
                 args.push('--except', 'Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace');
 
                 // Indicate that the source is passed through STDIN
-                args.push('-');
+                if (document.uri.scheme === 'untitled') {
+                    args.push('-')
+                } else {
+                    // Necessary to support excludes in ameba config
+                    args.push('--stdin-filename', document.fileName);
+                }
             }
         }
-
-        const configFile = path.join(dir, this.config.configFileName);
-        if (existsSync(configFile)) args.push('--config', configFile);
 
         const task = new Task(document.uri, token => {
             return new Promise((resolve, reject) => {
@@ -180,7 +185,13 @@ export class Ameba {
                             diagnosticUri = Uri.parse(path.join(dir, source.path));
                         }
 
-                        const logPath = path.relative(dir, diagnosticUri.fsPath)
+                        let logPath: string
+                        if (document.uri.scheme === 'untitled') {
+                            logPath = document.uri.fsPath
+                        } else {
+                            logPath = path.relative(dir, diagnosticUri.fsPath)
+                        }
+
                         outputChannel.appendLine(`[Task] (${logPath}) Found ${parsed.length} issues`)
                         diagnostics.push([diagnosticUri, parsed]);
                     }
@@ -211,10 +222,8 @@ export class Ameba {
     public clear(document: TextDocument | null = null): void {
         if (document) {
             let uri = document.uri;
-            if (uri.scheme === 'file') {
-                this.taskQueue.cancel(uri);
-                this.diag.delete(uri);
-            }
+            this.taskQueue.cancel(uri);
+            this.diag.delete(uri);
         } else {
             this.taskQueue.clear();
             this.diag.clear();
