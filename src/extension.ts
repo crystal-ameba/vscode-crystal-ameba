@@ -55,7 +55,7 @@ export function activate(context: ExtensionContext) {
                 const editor = window.activeTextEditor;
                 if (editor) {
                     outputChannel.appendLine(`[Restart] Clearing diagnostics for ${getRelativePath(editor.document)}`)
-                    ameba.clear(editor.document);
+                    ameba.clear(editor.document.uri);
                 }
             } else {
                 outputChannel.appendLine('[Restart] Starting ameba')
@@ -118,8 +118,17 @@ export function activate(context: ExtensionContext) {
     });
 
     workspace.onDidCloseTextDocument(doc => {
-        ameba && ameba.clear(doc);
+        ameba && ameba.clear(doc.uri);
     });
+
+    workspace.onDidDeleteFiles(e => {
+        if (!ameba) return;
+
+       for (const file of e.files) {
+            outputChannel.appendLine(`[Delete] Clearing ${file.fsPath}`)
+            ameba && ameba.clear(file)
+        }
+    })
 }
 
 export function deactivate() { }
