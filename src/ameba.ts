@@ -10,7 +10,8 @@ import {
     TextDocument,
     Uri,
     window,
-    workspace
+    workspace,
+    WorkspaceFolder
 } from 'vscode';
 
 import { AmebaOutput } from './amebaOutput';
@@ -29,22 +30,28 @@ export class Ameba {
         this.config = getConfig();
     }
 
-    public execute(document: TextDocument, virtual: boolean = false): void {
-        if (!isCrystalDocument(document)) return;
-        if (isDocumentVirtual(document) && !virtual) return;
+    public execute(document: TextDocument | WorkspaceFolder, virtual: boolean = false): void {
+        if (!this.isTextDocument(document)) {
+            virtual = false;
+       } else {
+            if (!isCrystalDocument(document)) return;
+            if (isDocumentVirtual(document) && !virtual) return;
+        }
 
         const dir = (workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document.uri)).uri.fsPath;
 
         const args = [this.config.command, '--format', 'json'];
 
-        if (!virtual) {
-            args.push(document.fileName)
-        } else {
-            // Disabling these as they're common when typing
-            args.push('--except', 'Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace');
+        if (this.isTextDocument(document)) {
+            if (!virtual) {
+                args.push(document.fileName)
+            } else {
+                // Disabling these as they're common when typing
+                args.push('--except', 'Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace');
 
-            // Indicate that the source is passed through STDIN
-            args.push('-');
+                // Indicate that the source is passed through STDIN
+                args.push('-');
+            }
         }
 
         const configFile = path.join(dir, this.config.configFileName);
@@ -58,7 +65,7 @@ export class Ameba {
                 outputChannel.appendLine(`$ ${args.join(' ')}`)
                 const proc = spawn(args[0], args.slice(1), { cwd: dir });
 
-                if (virtual) {
+                if (virtual && this.isTextDocument(document)) {
                     const documentText: string = document.getText();
                     proc.stdin.write(documentText)
                     proc.stdin.end();
@@ -212,5 +219,9 @@ export class Ameba {
             this.taskQueue.clear();
             this.diag.clear();
         }
+    }
+
+    isTextDocument(document: TextDocument | WorkspaceFolder): document is TextDocument {
+        return (document as TextDocument).languageId !== undefined;
     }
 }
