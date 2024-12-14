@@ -201,13 +201,10 @@ export class Ameba {
         }
     }
 
-    public clear(document: TextDocument | null = null): void {
-        if (document) {
-            let uri = document.uri;
-            if (uri.scheme === 'file') {
-                this.taskQueue.cancel(uri);
-                this.diag.delete(uri);
-            }
+    public clear(uri: Uri | null = null): void {
+        if (uri) {
+            this.taskQueue.cancel(uri);
+            this.diag.delete(uri);
         } else {
             this.taskQueue.clear();
             this.diag.clear();
