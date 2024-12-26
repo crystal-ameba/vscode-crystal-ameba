@@ -16,7 +16,7 @@ import {
 import { AmebaOutput } from './amebaOutput';
 import { AmebaConfig, getConfig } from './configuration';
 import { Task, TaskQueue } from './taskQueue';
-import { isCrystalDocument, isDocumentVirtual, noWorkspaceFolder, outputChannel } from './extension';
+import { isValidCrystalDocument, isDocumentVirtual, noWorkspaceFolder, outputChannel } from './extension';
 
 export class Ameba {
     private diag: DiagnosticCollection;
@@ -30,7 +30,7 @@ export class Ameba {
     }
 
     public execute(document: TextDocument, virtual: boolean = false): void {
-        if (!isCrystalDocument(document)) return;
+        if (!isValidCrystalDocument(document)) return;
         if (isDocumentVirtual(document) && !virtual) return;
 
         const dir = (workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document.uri)).uri.fsPath;
