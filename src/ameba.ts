@@ -16,7 +16,7 @@ import {
 import { AmebaOutput } from './amebaOutput';
 import { AmebaConfig, getConfig } from './configuration';
 import { Task, TaskQueue } from './taskQueue';
-import { isCrystalDocument, isDocumentVirtual, noWorkspaceFolder, outputChannel } from './extension';
+import { isValidCrystalDocument, isDocumentVirtual, noWorkspaceFolder, outputChannel } from './extension';
 
 export class Ameba {
     private diag: DiagnosticCollection;
@@ -30,12 +30,14 @@ export class Ameba {
     }
 
     public execute(document: TextDocument, virtual: boolean = false): void {
-        if (!isCrystalDocument(document)) return;
+        if (!isValidCrystalDocument(document)) return;
         if (isDocumentVirtual(document) && !virtual) return;
 
         const dir = (workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document.uri)).uri.fsPath;
 
         const args = [this.config.command, '--format', 'json'];
+        const configFile = path.join(dir, this.config.configFileName);
+        if (existsSync(configFile)) args.push('--config', configFile);
 
         if (!virtual) {
             args.push(document.fileName)
@@ -44,11 +46,14 @@ export class Ameba {
             args.push('--except', 'Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace');
 
             // Indicate that the source is passed through STDIN
-            args.push('-');
+            if (document.uri.scheme === 'untitled') {
+                args.push('-')
+            } else {
+                // Necessary to support excludes in ameba config
+                args.push('--stdin-filename', document.fileName);
+            }
         }
 
-        const configFile = path.join(dir, this.config.configFileName);
-        if (existsSync(configFile)) args.push('--config', configFile);
 
         const task = new Task(document.uri, token => {
             return new Promise((resolve, reject) => {
@@ -173,7 +178,13 @@ export class Ameba {
                             diagnosticUri = Uri.parse(path.join(dir, source.path));
                         }
 
-                        const logPath = path.relative(dir, diagnosticUri.fsPath)
+                        let logPath: string
+                        if (document.uri.scheme === 'untitled') {
+                            logPath = document.uri.fsPath
+                        } else {
+                            logPath = path.relative(dir, diagnosticUri.fsPath)
+                        }
+
                         outputChannel.appendLine(`[Task] (${logPath}) Found ${parsed.length} issues`)
                         diagnostics.push([diagnosticUri, parsed]);
                     }

@@ -86,7 +86,7 @@ export function activate(context: ExtensionContext) {
 
     // This can happen when a file is open _or_ when a file's language id changes
     workspace.onDidOpenTextDocument(doc => {
-        if (ameba && ameba.config.trigger !== LintTrigger.None && isCrystalDocument(doc)) {
+        if (ameba && ameba.config.trigger !== LintTrigger.None && isValidCrystalDocument(doc)) {
             if (isDocumentVirtual(doc)) {
                 if (ameba.config.trigger === LintTrigger.Type) {
                     outputChannel.appendLine(`[Open] Running ameba on ${getRelativePath(doc)}`);
@@ -100,14 +100,14 @@ export function activate(context: ExtensionContext) {
     });
 
     workspace.onDidChangeTextDocument(e => {
-        if (ameba && ameba.config.trigger == LintTrigger.Type && isCrystalDocument(e.document)) {
+        if (ameba && ameba.config.trigger == LintTrigger.Type && isValidCrystalDocument(e.document)) {
             outputChannel.appendLine(`[Change] Running ameba on ${getRelativePath(e.document)}`);
             ameba.execute(e.document, isDocumentVirtual(e.document));
         }
     })
 
     workspace.onDidSaveTextDocument(doc => {
-        if (ameba && ameba.config.trigger === LintTrigger.Save && isCrystalDocument(doc)) {
+        if (ameba && ameba.config.trigger === LintTrigger.Save && isValidCrystalDocument(doc)) {
             outputChannel.appendLine(`[Save] Running ameba on ${getRelativePath(doc)}`)
             ameba.execute(doc);
         } else if (ameba && ameba.config.trigger !== LintTrigger.None && path.basename(doc.fileName) == ".ameba.yml") {
@@ -118,7 +118,17 @@ export function activate(context: ExtensionContext) {
     });
 
     workspace.onDidCloseTextDocument(doc => {
-        ameba && ameba.clear(doc.uri);
+        if (!ameba || !isValidCrystalDocument(doc)) return;
+        let shouldClear = true;
+
+        if (workspace.workspaceFolders) {
+            shouldClear = !workspace.getWorkspaceFolder(doc.uri);
+        }
+
+        if (shouldClear) {
+            outputChannel.appendLine(`[Clear] Clearing ${getRelativePath(doc)}`)
+            ameba.clear(doc.uri);
+        }
     });
 
     workspace.onDidDeleteFiles(e => {
@@ -137,7 +147,7 @@ function executeAmebaOnWorkspace(ameba: Ameba | null) {
     if (!ameba || ameba.config.trigger === LintTrigger.None) return;
 
     for (const doc of workspace.textDocuments) {
-        if (isCrystalDocument(doc)) {
+        if (isValidCrystalDocument(doc)) {
             if (isDocumentVirtual(doc)) {
                 if (ameba.config.trigger === LintTrigger.Type) {
                     outputChannel.appendLine(`[Workspace] Running ameba on ${getRelativePath(doc)}`);
@@ -152,12 +162,21 @@ function executeAmebaOnWorkspace(ameba: Ameba | null) {
 }
 
 function getRelativePath(document: TextDocument): string {
+    if (document.uri.scheme === 'untitled') {
+        return document.fileName
+    }
+
     const space: WorkspaceFolder =
         workspace.getWorkspaceFolder(document.uri) ?? noWorkspaceFolder(document.uri)
     return path.relative(space.uri.fsPath, document.uri.fsPath)
 }
 
 export function noWorkspaceFolder(uri: Uri): WorkspaceFolder {
+    const firstWorkspaceFolder = workspace.workspaceFolders?.at(0);
+    if (uri.scheme === 'untitled' && firstWorkspaceFolder) {
+        return firstWorkspaceFolder
+    }
+
     return {
         uri: Uri.parse(path.dirname(uri.fsPath)),
         name: path.basename(path.dirname(uri.fsPath)),
@@ -165,10 +184,10 @@ export function noWorkspaceFolder(uri: Uri): WorkspaceFolder {
     }
 }
 
-export function isCrystalDocument(doc: TextDocument): boolean {
-    return doc.languageId === 'crystal'
+export function isValidCrystalDocument(doc: TextDocument): boolean {
+    return doc.languageId === 'crystal' && (doc.uri.scheme === 'file' || doc.uri.scheme === 'untitled')
 }
 
 export function isDocumentVirtual(document: TextDocument): boolean {
-    return document.isDirty || document.isUntitled || document.uri.scheme !== 'file'
+    return document.isDirty || document.isUntitled || document.uri.scheme === 'untitled'
 }
