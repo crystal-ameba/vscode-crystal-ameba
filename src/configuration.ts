@@ -10,12 +10,18 @@ export interface AmebaConfig {
     command: string;
     configFileName: string;
     trigger: LintTrigger;
+    scope: LintScope;
 }
 
 export enum LintTrigger {
     None = "none",
     Save = "save",
     Type = "type"
+}
+
+export enum LintScope {
+    File = "file",
+    Workspace = "workspace"
 }
 
 export function getConfig(): AmebaConfig {
@@ -34,6 +40,7 @@ export function getConfig(): AmebaConfig {
     const workspaceConfig = workspace.getConfiguration('crystal-ameba');
     const currentVersion = execSync(`"${command}" --version`).toString();
 
+    const scope = workspaceConfig.get<LintScope>("lint-scope", LintScope.File);
     let trigger = workspaceConfig.get<LintTrigger>("lint-trigger", LintTrigger.Type);
 
     if (!semver.satisfies(currentVersion, ">=1.6.4") && trigger == LintTrigger.Type) {
@@ -43,6 +50,7 @@ export function getConfig(): AmebaConfig {
     return {
         command,
         configFileName: '.ameba.yml',
-        trigger: trigger
+        trigger: trigger,
+        scope: scope
     };
 };
