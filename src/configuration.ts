@@ -38,12 +38,12 @@ export function getConfig(): AmebaConfig {
     }
 
     const workspaceConfig = workspace.getConfiguration('crystal-ameba');
-    const currentVersion = execSync(`"${command}" --version`).toString();
+    const currentVersion = semver.coerce(execSync(`"${command}" --version`).toString().trim());
 
     const scope = workspaceConfig.get<LintScope>("lint-scope", LintScope.File);
     let trigger = workspaceConfig.get<LintTrigger>("lint-trigger", LintTrigger.Type);
 
-    if (!semver.satisfies(currentVersion, ">=1.6.4") && trigger == LintTrigger.Type) {
+    if ((!currentVersion || !semver.satisfies(currentVersion, ">=1.6.4")) && trigger == LintTrigger.Type) {
         trigger = LintTrigger.Save;
     }
 
