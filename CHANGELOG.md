@@ -1,20 +1,20 @@
 ## [0.3.0] (2025-10-23)
 
 * Add link to documentation by @nobodywasishere in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/146
-* Move to CancellationToken, Use spawn instead of exec, Add output channel for logging by @nobodywasishere in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/147
+* Move to `CancellationToken`, Use `spawn` instead of `exec`, Add output channel for logging by @nobodywasishere in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/147
 * Reload diagnostics when changing vscode/local config by @nobodywasishere in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/150
 * Add support for linting while typing by @nobodywasishere in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/151
 * Delete lints for files that have been deleted by @nobodywasishere in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/158
 * Minor bugfixes by @nobodywasishere in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/157
 * Add `lint-scope` config option by @nobodywasishere in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/155
-* Coerce ameba version check into a semver by @nobodywasishere in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/163
+* Coerce `ameba` version check into a semver by @nobodywasishere in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/163
 * Add publish CI script (#189) by @nobodywasishere in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/190
 
 ## [0.2.1] (2023-08-05)
 
 ### Chores
 
-* Check config file existence for new ameba v1.5 by @joseafga in #42 https://github.com/crystal-ameba/vscode-crystal-ameba/pull/42
+* Check config file existence for new `ameba` v1.5 by @joseafga in #42 https://github.com/crystal-ameba/vscode-crystal-ameba/pull/42
 * Bump @types/node from 20.4.4 to 20.4.5 by @dependabot in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/40
 * Bump @types/node from 20.4.2 to 20.4.4 by @dependabot in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/39
 * Bump @types/node from 20.4.1 to 20.4.2 by @dependabot in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/38
