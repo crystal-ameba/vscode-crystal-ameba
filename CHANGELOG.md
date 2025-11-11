@@ -1,3 +1,7 @@
+## [0.3.1] (2025-11-11)
+
+* Fixes for publish CI script
+
 ## [0.3.0] (2025-11-10)
 
 * Add link to documentation by @nobodywasishere in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/146
