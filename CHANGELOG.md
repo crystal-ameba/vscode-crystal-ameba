@@ -12,8 +12,6 @@
 
 ## [0.2.1] (2023-08-05)
 
-### Chores
-
 * Check config file existence for new `ameba` v1.5 by @joseafga in #42 https://github.com/crystal-ameba/vscode-crystal-ameba/pull/42
 * Bump @types/node from 20.4.4 to 20.4.5 by @dependabot in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/40
 * Bump @types/node from 20.4.2 to 20.4.4 by @dependabot in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/39
