@@ -1,4 +1,4 @@
-## [0.3.0] (2025-10-23)
+## [0.3.0] (2025-11-10)
 
 * Add link to documentation by @nobodywasishere in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/146
 * Move to `CancellationToken`, Use `spawn` instead of `exec`, Add output channel for logging by @nobodywasishere in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/147
