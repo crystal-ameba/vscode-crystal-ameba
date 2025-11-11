@@ -156,7 +156,7 @@ export function activate(context: ExtensionContext) {
     workspace.onDidDeleteFiles(e => {
         if (!ameba) return;
 
-       for (const file of e.files) {
+        for (const file of e.files) {
             outputChannel.appendLine(`[Delete] Clearing ${file.fsPath}`)
             ameba && ameba.clear(file)
         }
@@ -201,7 +201,7 @@ function getRelativePath(document: TextDocument): string {
 }
 
 export function noWorkspaceFolder(uri: Uri): WorkspaceFolder {
-    const firstWorkspaceFolder = workspace.workspaceFolders?.at(0);
+    const firstWorkspaceFolder = workspace.workspaceFolders?.[0];
     if (uri.scheme === 'untitled' && firstWorkspaceFolder) {
         return firstWorkspaceFolder
     }
