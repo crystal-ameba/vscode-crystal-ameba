@@ -4,7 +4,7 @@
   "publisher": "veelenga",
   "icon": "assets/ameba.png",
   "description": "Ameba extension for Visual Studio Code",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "license": "MIT",
   "engines": {
     "vscode": "^1.75.0"
