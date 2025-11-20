@@ -170,7 +170,7 @@ export class Ameba {
 
                             diag.code = {
                                 value: "Docs",
-                                target: Uri.parse(`https://crystaldoc.info/github/crystal-ameba/ameba/v${results.metadata.ameba_version}/Ameba/Rule/${issue.rule_name}.html`)
+                                target: Uri.parse(`https://crystal-ameba.github.io/ameba/${results.metadata.ameba_version}/Ameba/Rule/${issue.rule_name}.html`),
                             }
 
                             parsed.push(diag);
