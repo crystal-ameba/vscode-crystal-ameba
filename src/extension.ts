@@ -52,7 +52,6 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(
         commands.registerCommand('crystal.ameba.lint-workspace', () => {
             if (ameba) {
-                if (!ameba) return;
                 outputChannel.appendLine('[Lint] Running ameba on current workspace')
                 executeAmebaOnWorkspace(ameba)
             } else {
