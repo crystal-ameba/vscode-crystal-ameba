@@ -1,6 +1,6 @@
 {
-  "name": "ameba",
-  "displayName": "Crystal Ameba",
+  "name": "crystal-lang-ameba",
+  "displayName": "Crystal Ameba (New)",
   "publisher": "crystal-ameba",
   "icon": "assets/ameba.png",
   "description": "Ameba extension for Visual Studio Code",
