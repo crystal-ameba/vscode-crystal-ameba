@@ -1,3 +1,7 @@
+## [0.3.2] (2026-01-04)
+
+* Now under the `crystal-ameba` namespace
+
 ## [0.3.1] (2025-11-11)
 
 * Fixes for publish CI script
