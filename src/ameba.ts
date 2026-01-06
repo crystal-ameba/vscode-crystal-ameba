@@ -213,9 +213,9 @@ export class Ameba {
             case 'Warning':
                 return DiagnosticSeverity.Warning;
             case 'Convention':
-                return DiagnosticSeverity.Hint;
-            default:
                 return DiagnosticSeverity.Information;
+            default:
+                return DiagnosticSeverity.Hint;
         }
     }
 
