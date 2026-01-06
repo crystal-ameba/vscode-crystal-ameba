@@ -212,7 +212,7 @@ export class Ameba {
                 return DiagnosticSeverity.Error;
             case 'Warning':
                 return DiagnosticSeverity.Warning;
-            case 'Refactoring':
+            case 'Convention':
                 return DiagnosticSeverity.Hint;
             default:
                 return DiagnosticSeverity.Information;
