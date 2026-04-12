@@ -1,5 +1,5 @@
 {
-  "name": "crystal-ameba",
+  "name": "crystal-ameba-linter",
   "displayName": "Crystal Ameba",
   "publisher": "crystal-ameba",
   "icon": "assets/ameba.png",
@@ -52,7 +52,7 @@
       "type": "object",
       "title": "Crystal Ameba configuration",
       "properties": {
-        "crystal-ameba.lint-scope": {
+        "crystal-ameba-linter.lint-scope": {
           "type": "string",
           "description": "Whether the linter should only care about open files or all files in the workspace.",
           "default": "file",
@@ -61,7 +61,7 @@
             "workspace"
           ]
         },
-        "crystal-ameba.lint-trigger": {
+        "crystal-ameba-linter.lint-trigger": {
           "type": "string",
           "description": "When the linter should be executed. Set to `none` to disable automatic linting.",
           "default": "type",
