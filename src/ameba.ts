@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 import * as path from 'path';
 import { existsSync } from 'fs';
+import * as semver from 'semver';
 import {
     commands,
     Diagnostic,
@@ -142,6 +143,15 @@ export class Ameba {
 
                     const diagnostics: [Uri, Diagnostic[]][] = [];
 
+                    const amebaVersion = semver.parse(results.metadata.ameba_version, false, true);
+                    const isDevVersion = amebaVersion
+                        .prerelease
+                        .includes("dev");
+
+                    const versionForDocs = isDevVersion
+                        ? "master"
+                        : amebaVersion.toString();
+
                     for (const source of results.sources) {
                         if (!source.issues.length) continue;
 
@@ -170,7 +180,7 @@ export class Ameba {
 
                             diag.code = {
                                 value: "Docs",
-                                target: Uri.parse(`https://crystal-ameba.github.io/ameba/${results.metadata.ameba_version}/Ameba/Rule/${issue.rule_name}.html`),
+                                target: Uri.parse(`https://crystal-ameba.github.io/ameba/${versionForDocs}/Ameba/Rule/${issue.rule_name}.html`),
                             }
 
                             parsed.push(diag);
