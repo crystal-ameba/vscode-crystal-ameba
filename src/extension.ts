@@ -95,71 +95,83 @@ export function activate(context: ExtensionContext) {
         })
     );
 
-    workspace.onDidChangeConfiguration(_ => {
-        if (!ameba) return;
-        outputChannel.appendLine(`[Config] Reloading diagnostics after config change`)
-        ameba.config = getConfig();
-        ameba.clear()
-        executeAmebaOnWorkspace(ameba)
-    });
+    context.subscriptions.push(
+        workspace.onDidChangeConfiguration(_ => {
+            if (!ameba) return;
+            outputChannel.appendLine(`[Config] Reloading diagnostics after config change`)
+            ameba.config = getConfig();
+            ameba.clear()
+            executeAmebaOnWorkspace(ameba)
+        })
+    );
 
     executeAmebaOnWorkspace(ameba);
 
     // This can happen when a file is open _or_ when a file's language id changes
-    workspace.onDidOpenTextDocument(doc => {
-        if (ameba && ameba.config.trigger !== LintTrigger.None && isValidCrystalDocument(doc)) {
-            if (isDocumentVirtual(doc)) {
-                if (ameba.config.trigger === LintTrigger.Type) {
+    context.subscriptions.push(
+        workspace.onDidOpenTextDocument(doc => {
+            if (ameba && ameba.config.trigger !== LintTrigger.None && isValidCrystalDocument(doc)) {
+                if (isDocumentVirtual(doc)) {
+                    if (ameba.config.trigger === LintTrigger.Type) {
+                        outputChannel.appendLine(`[Open] Running ameba on ${getRelativePath(doc)}`);
+                        ameba.execute(doc, true);
+                    }
+                } else {
                     outputChannel.appendLine(`[Open] Running ameba on ${getRelativePath(doc)}`);
-                    ameba.execute(doc, true);
+                    ameba.execute(doc);
                 }
-            } else {
-                outputChannel.appendLine(`[Open] Running ameba on ${getRelativePath(doc)}`);
-                ameba.execute(doc);
             }
-        }
-    });
+        })
+    );
 
-    workspace.onDidChangeTextDocument(e => {
-        if (ameba && ameba.config.trigger === LintTrigger.Type && isValidCrystalDocument(e.document)) {
-            outputChannel.appendLine(`[Change] Running ameba on ${getRelativePath(e.document)}`);
-            ameba.execute(e.document, isDocumentVirtual(e.document));
-        }
-    })
+    context.subscriptions.push(
+        workspace.onDidChangeTextDocument(e => {
+            if (ameba && ameba.config.trigger === LintTrigger.Type && isValidCrystalDocument(e.document)) {
+                outputChannel.appendLine(`[Change] Running ameba on ${getRelativePath(e.document)}`);
+                ameba.execute(e.document, isDocumentVirtual(e.document));
+            }
+        })
+    );
 
-    workspace.onDidSaveTextDocument(doc => {
-        if (ameba && ameba.config.trigger === LintTrigger.Save && isValidCrystalDocument(doc)) {
-            outputChannel.appendLine(`[Save] Running ameba on ${getRelativePath(doc)}`)
-            ameba.execute(doc);
-        } else if (ameba && ameba.config.trigger !== LintTrigger.None && path.basename(doc.fileName) == ".ameba.yml") {
-            outputChannel.appendLine(`[Config] Reloading diagnostics after config file change`)
-            ameba.clear();
-            executeAmebaOnWorkspace(ameba);
-        }
-    });
+    context.subscriptions.push(
+        workspace.onDidSaveTextDocument(doc => {
+            if (ameba && ameba.config.trigger === LintTrigger.Save && isValidCrystalDocument(doc)) {
+                outputChannel.appendLine(`[Save] Running ameba on ${getRelativePath(doc)}`)
+                ameba.execute(doc);
+            } else if (ameba && ameba.config.trigger !== LintTrigger.None && path.basename(doc.fileName) == ".ameba.yml") {
+                outputChannel.appendLine(`[Config] Reloading diagnostics after config file change`)
+                ameba.clear();
+                executeAmebaOnWorkspace(ameba);
+            }
+        })
+    );
 
-    workspace.onDidCloseTextDocument(doc => {
-        if (!ameba || !isValidCrystalDocument(doc)) return;
-        let shouldClear = true;
+    context.subscriptions.push(
+        workspace.onDidCloseTextDocument(doc => {
+            if (!ameba || !isValidCrystalDocument(doc)) return;
+            let shouldClear = true;
+        
+            if (workspace.workspaceFolders) {
+                shouldClear = !workspace.getWorkspaceFolder(doc.uri);
+            }
+        
+            if (shouldClear) {
+                outputChannel.appendLine(`[Clear] Clearing ${getRelativePath(doc)}`)
+                ameba.clear(doc.uri);
+            }
+        })
+    );
 
-        if (workspace.workspaceFolders) {
-            shouldClear = !workspace.getWorkspaceFolder(doc.uri);
-        }
-
-        if (shouldClear) {
-            outputChannel.appendLine(`[Clear] Clearing ${getRelativePath(doc)}`)
-            ameba.clear(doc.uri);
-        }
-    });
-
-    workspace.onDidDeleteFiles(e => {
-        if (!ameba) return;
-
-        for (const file of e.files) {
-            outputChannel.appendLine(`[Delete] Clearing ${file.fsPath}`)
-            ameba.clear(file)
-        }
-    })
+    context.subscriptions.push(
+        workspace.onDidDeleteFiles(e => {
+            if (!ameba) return;
+        
+            for (const file of e.files) {
+                outputChannel.appendLine(`[Delete] Clearing ${file.fsPath}`)
+                ameba.clear(file)
+            }
+        })
+    );
 }
 
 export function deactivate() { }
