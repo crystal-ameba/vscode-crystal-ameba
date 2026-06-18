@@ -157,7 +157,7 @@ export function activate(context: ExtensionContext) {
 
         for (const file of e.files) {
             outputChannel.appendLine(`[Delete] Clearing ${file.fsPath}`)
-            ameba && ameba.clear(file)
+            ameba.clear(file)
         }
     })
 }
