@@ -180,9 +180,9 @@ export class Ameba {
                         if (virtual) {
                             diagnosticUri = document.uri;
                         } else if (path.isAbsolute(source.path)) {
-                            diagnosticUri = Uri.parse(source.path)
+                            diagnosticUri = Uri.file(source.path)
                         } else {
-                            diagnosticUri = Uri.parse(path.join(dir, source.path));
+                            diagnosticUri = Uri.file(path.join(dir, source.path));
                         }
 
                         let logPath: string
