@@ -206,7 +206,7 @@ export function noWorkspaceFolder(uri: Uri): WorkspaceFolder {
     }
 
     return {
-        uri: Uri.parse(path.dirname(uri.fsPath)),
+        uri: Uri.file(path.dirname(uri.fsPath)),
         name: path.basename(path.dirname(uri.fsPath)),
         index: -1
     }
