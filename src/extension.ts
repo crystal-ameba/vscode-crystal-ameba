@@ -121,7 +121,7 @@ export function activate(context: ExtensionContext) {
     });
 
     workspace.onDidChangeTextDocument(e => {
-        if (ameba && ameba.config.trigger == LintTrigger.Type && isValidCrystalDocument(e.document)) {
+        if (ameba && ameba.config.trigger === LintTrigger.Type && isValidCrystalDocument(e.document)) {
             outputChannel.appendLine(`[Change] Running ameba on ${getRelativePath(e.document)}`);
             ameba.execute(e.document, isDocumentVirtual(e.document));
         }
