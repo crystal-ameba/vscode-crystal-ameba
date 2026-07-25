@@ -180,7 +180,7 @@ export class Ameba {
 
                             diag.code = {
                                 value: "Docs",
-                                target: Uri.parse(`https://crystal-ameba.org/ameba/${versionForDocs}/Ameba/Rule/${issue.rule_name}.html`),
+                                target: Uri.parse(`https://crystal-ameba.org/api/${versionForDocs}/Ameba/Rule/${issue.rule_name}.html`),
                             }
 
                             parsed.push(diag);
