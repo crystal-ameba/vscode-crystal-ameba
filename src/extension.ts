@@ -225,8 +225,8 @@ export function noWorkspaceFolder(uri: Uri): WorkspaceFolder {
 }
 
 export function isValidCrystalDocument(doc: TextDocument): boolean {
-    return (doc.languageId === 'crystal' || doc.languageId === 'html.ecr') &&
-        (doc.uri.scheme === 'file' || doc.uri.scheme === 'untitled')
+    return ['crystal', 'html.ecr'].includes(doc.languageId) &&
+        ['file', 'untitled'].includes(doc.uri.scheme)
 }
 
 export function isDocumentVirtual(document: TextDocument): boolean {
