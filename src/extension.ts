@@ -3,16 +3,18 @@ import {
   ExtensionContext,
   languages,
   OutputChannel,
-  TextDocument,
-  Uri,
   window,
   workspace,
-  WorkspaceFolder,
 } from 'vscode';
 import * as path from 'path';
 
 import { Ameba } from './ameba';
 import { getConfig, LintScope, LintTrigger } from './configuration';
+import {
+  getRelativePath,
+  isValidCrystalDocument,
+  isDocumentVirtual,
+} from './helpers';
 
 export let outputChannel: OutputChannel;
 
@@ -243,43 +245,4 @@ function executeAmebaOnWorkspace(ameba: Ameba | null) {
       ameba.execute(folder);
     }
   }
-}
-
-function getRelativePath(document: TextDocument): string {
-  if (document.uri.scheme === 'untitled') {
-    return document.fileName;
-  }
-
-  const space: WorkspaceFolder =
-    workspace.getWorkspaceFolder(document.uri) ??
-    noWorkspaceFolder(document.uri);
-  return path.relative(space.uri.fsPath, document.uri.fsPath);
-}
-
-export function noWorkspaceFolder(uri: Uri): WorkspaceFolder {
-  const firstWorkspaceFolder = workspace.workspaceFolders?.[0];
-  if (uri.scheme === 'untitled' && firstWorkspaceFolder) {
-    return firstWorkspaceFolder;
-  }
-
-  return {
-    uri: Uri.file(path.dirname(uri.fsPath)),
-    name: path.basename(path.dirname(uri.fsPath)),
-    index: -1,
-  };
-}
-
-export function isValidCrystalDocument(doc: TextDocument): boolean {
-  return (
-    ['crystal', 'html.ecr'].includes(doc.languageId) &&
-    ['file', 'untitled'].includes(doc.uri.scheme)
-  );
-}
-
-export function isDocumentVirtual(document: TextDocument): boolean {
-  return (
-    document.isDirty ||
-    document.isUntitled ||
-    document.uri.scheme === 'untitled'
-  );
 }

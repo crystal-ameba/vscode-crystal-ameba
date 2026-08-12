@@ -19,12 +19,13 @@ import { AmebaOutput } from './amebaOutput';
 import { AmebaConfig, getConfig } from './configuration';
 import { TaskQueue } from './taskQueue';
 import { Task } from './task';
+import { outputChannel } from './extension';
 import {
+  isTextDocument,
   isValidCrystalDocument,
   isDocumentVirtual,
   noWorkspaceFolder,
-  outputChannel,
-} from './extension';
+} from './helpers';
 
 export class Ameba {
   private diag: DiagnosticCollection;
@@ -41,7 +42,7 @@ export class Ameba {
     document: TextDocument | WorkspaceFolder,
     virtual: boolean = false
   ): void {
-    if (!this.isTextDocument(document)) {
+    if (!isTextDocument(document)) {
       virtual = false;
     } else {
       if (!isValidCrystalDocument(document)) return;
@@ -57,7 +58,7 @@ export class Ameba {
     const configFile = path.join(dir, this.config.configFileName);
     if (existsSync(configFile)) args.push('--config', configFile);
 
-    if (this.isTextDocument(document)) {
+    if (isTextDocument(document)) {
       if (!virtual) {
         args.push(document.fileName);
       } else {
@@ -85,7 +86,7 @@ export class Ameba {
         outputChannel.appendLine(`$ ${args.join(' ')}`);
         const proc = spawn(args[0], args.slice(1), { cwd: dir });
 
-        if (virtual && this.isTextDocument(document)) {
+        if (virtual && isTextDocument(document)) {
           const documentText: string = document.getText();
           proc.stdin.write(documentText);
           proc.stdin.end();
@@ -264,11 +265,5 @@ export class Ameba {
       this.taskQueue.clear();
       this.diag.clear();
     }
-  }
-
-  isTextDocument(
-    document: TextDocument | WorkspaceFolder
-  ): document is TextDocument {
-    return (document as TextDocument).languageId !== undefined;
   }
 }
