@@ -17,7 +17,8 @@ import {
 
 import { AmebaOutput } from './amebaOutput';
 import { AmebaConfig, getConfig } from './configuration';
-import { Task, TaskQueue } from './taskQueue';
+import { TaskQueue } from './taskQueue';
+import { Task } from './task';
 import {
   isValidCrystalDocument,
   isDocumentVirtual,
