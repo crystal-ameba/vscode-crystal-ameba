@@ -4,7 +4,7 @@ import { existsSync } from 'fs';
 import * as semver from 'semver';
 import { execSync } from 'child_process';
 
-import { outputChannel } from './extension';
+import { log } from './extension';
 
 export interface AmebaConfig {
   command: string;
@@ -30,12 +30,10 @@ export function getConfig(): AmebaConfig {
   if (root.length) {
     const localAmebaPath = path.join(root[0].uri.fsPath, 'bin', 'ameba');
     if (existsSync(localAmebaPath)) {
-      outputChannel.appendLine(
-        `[Config] Using local ameba at ${localAmebaPath}`
-      );
+      log(`[Config] Using local ameba at ${localAmebaPath}`);
       command = localAmebaPath;
     } else {
-      outputChannel.appendLine(`[Config] Using system ameba`);
+      log(`[Config] Using system ameba`);
     }
   }
 

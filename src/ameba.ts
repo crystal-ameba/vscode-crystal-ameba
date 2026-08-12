@@ -19,7 +19,7 @@ import { AmebaOutput } from './amebaOutput';
 import { AmebaConfig, getConfig } from './configuration';
 import { TaskQueue } from './taskQueue';
 import { Task } from './task';
-import { outputChannel } from './extension';
+import { log } from './extension';
 import {
   isTextDocument,
   isValidCrystalDocument,
@@ -83,7 +83,7 @@ export class Ameba {
         let stdoutArr: string[] = [];
         let stderrArr: string[] = [];
 
-        outputChannel.appendLine(`$ ${args.join(' ')}`);
+        log(`$ ${args.join(' ')}`);
         const proc = spawn(args[0], args.slice(1), { cwd: dir });
 
         if (virtual && isTextDocument(document)) {
@@ -106,9 +106,7 @@ export class Ameba {
 
         proc.on('error', (err) => {
           console.error('Ameba: failed to start subprocess:', err);
-          outputChannel.appendLine(
-            `[Task] Error: failed to start subprocess:\n${err}`
-          );
+          log(`[Task] Error: failed to start subprocess:\n${err}`);
           window.showErrorMessage(`Failed to start Ameba: ${err.message}`);
           reject(err);
         });
@@ -150,9 +148,7 @@ export class Ameba {
             results = JSON.parse(stdout);
           } catch (err) {
             console.error('Ameba: failed parsing JSON:', err);
-            outputChannel.appendLine(
-              `[Task] Error: failed to parse JSON:\n${stdout}`
-            );
+            log(`[Task] Error: failed to parse JSON:\n${stdout}`);
             window.showErrorMessage('Ameba: failed to parse JSON response.');
             reject(err);
             return;
@@ -228,14 +224,12 @@ export class Ameba {
               logPath = path.relative(dir, diagnosticUri.fsPath);
             }
 
-            outputChannel.appendLine(
-              `[Task] (${logPath}) Found ${parsed.length} issues`
-            );
+            log(`[Task] (${logPath}) Found ${parsed.length} issues`);
             diagnostics.push([diagnosticUri, parsed]);
           }
 
           this.diag.set(diagnostics);
-          outputChannel.appendLine('[Task] Done!');
+          log('[Task] Done!');
           resolve();
         });
       });

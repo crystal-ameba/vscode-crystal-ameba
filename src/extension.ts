@@ -18,6 +18,10 @@ import {
 
 export let outputChannel: OutputChannel;
 
+export function log(message: string) {
+  outputChannel.appendLine(message);
+}
+
 export function activate(context: ExtensionContext) {
   outputChannel = window.createOutputChannel('Crystal Ameba', 'log');
   context.subscriptions.push(outputChannel);
@@ -32,7 +36,7 @@ export function activate(context: ExtensionContext) {
       if (ameba) {
         const editor = window.activeTextEditor;
         if (editor) {
-          outputChannel.appendLine('[Lint] Running ameba on current document');
+          log('[Lint] Running ameba on current document');
           ameba.execute(editor.document);
         }
       } else {
@@ -47,9 +51,7 @@ export function activate(context: ExtensionContext) {
               ameba = new Ameba(diag);
               const editor = window.activeTextEditor;
               if (editor) {
-                outputChannel.appendLine(
-                  '[Enable] Running ameba on current document'
-                );
+                log('[Enable] Running ameba on current document');
                 ameba.execute(editor.document);
               }
             },
@@ -62,7 +64,7 @@ export function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand('crystal.ameba.lint-workspace', () => {
       if (ameba) {
-        outputChannel.appendLine('[Lint] Running ameba on current workspace');
+        log('[Lint] Running ameba on current workspace');
         executeAmebaOnWorkspace(ameba);
       } else {
         window
@@ -87,13 +89,13 @@ export function activate(context: ExtensionContext) {
       if (ameba) {
         const editor = window.activeTextEditor;
         if (editor) {
-          outputChannel.appendLine(
+          log(
             `[Restart] Clearing diagnostics for ${getRelativePath(editor.document)}`
           );
           ameba.clear(editor.document.uri);
         }
       } else {
-        outputChannel.appendLine('[Restart] Starting ameba');
+        log('[Restart] Starting ameba');
         ameba = new Ameba(diag);
         executeAmebaOnWorkspace(ameba);
       }
@@ -103,7 +105,7 @@ export function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand('crystal.ameba.disable', () => {
       if (!ameba) return;
-      outputChannel.appendLine('[Disable] Disabling ameba for this session');
+      log('[Disable] Disabling ameba for this session');
       ameba.clear();
       ameba = null;
     })
@@ -112,9 +114,7 @@ export function activate(context: ExtensionContext) {
   context.subscriptions.push(
     workspace.onDidChangeConfiguration((_) => {
       if (!ameba) return;
-      outputChannel.appendLine(
-        `[Config] Reloading diagnostics after config change`
-      );
+      log(`[Config] Reloading diagnostics after config change`);
       ameba.config = getConfig();
       ameba.clear();
       executeAmebaOnWorkspace(ameba);
@@ -133,15 +133,11 @@ export function activate(context: ExtensionContext) {
       ) {
         if (isDocumentVirtual(doc)) {
           if (ameba.config.trigger === LintTrigger.Type) {
-            outputChannel.appendLine(
-              `[Open] Running ameba on ${getRelativePath(doc)}`
-            );
+            log(`[Open] Running ameba on ${getRelativePath(doc)}`);
             ameba.execute(doc, true);
           }
         } else {
-          outputChannel.appendLine(
-            `[Open] Running ameba on ${getRelativePath(doc)}`
-          );
+          log(`[Open] Running ameba on ${getRelativePath(doc)}`);
           ameba.execute(doc);
         }
       }
@@ -155,9 +151,7 @@ export function activate(context: ExtensionContext) {
         ameba.config.trigger === LintTrigger.Type &&
         isValidCrystalDocument(e.document)
       ) {
-        outputChannel.appendLine(
-          `[Change] Running ameba on ${getRelativePath(e.document)}`
-        );
+        log(`[Change] Running ameba on ${getRelativePath(e.document)}`);
         ameba.execute(e.document, isDocumentVirtual(e.document));
       }
     })
@@ -170,18 +164,14 @@ export function activate(context: ExtensionContext) {
         ameba.config.trigger === LintTrigger.Save &&
         isValidCrystalDocument(doc)
       ) {
-        outputChannel.appendLine(
-          `[Save] Running ameba on ${getRelativePath(doc)}`
-        );
+        log(`[Save] Running ameba on ${getRelativePath(doc)}`);
         ameba.execute(doc);
       } else if (
         ameba &&
         ameba.config.trigger !== LintTrigger.None &&
         path.basename(doc.fileName) == '.ameba.yml'
       ) {
-        outputChannel.appendLine(
-          `[Config] Reloading diagnostics after config file change`
-        );
+        log(`[Config] Reloading diagnostics after config file change`);
         ameba.clear();
         executeAmebaOnWorkspace(ameba);
       }
@@ -198,7 +188,7 @@ export function activate(context: ExtensionContext) {
       }
 
       if (shouldClear) {
-        outputChannel.appendLine(`[Clear] Clearing ${getRelativePath(doc)}`);
+        log(`[Clear] Clearing ${getRelativePath(doc)}`);
         ameba.clear(doc.uri);
       }
     })
@@ -209,7 +199,7 @@ export function activate(context: ExtensionContext) {
       if (!ameba) return;
 
       for (const file of e.files) {
-        outputChannel.appendLine(`[Delete] Clearing ${file.fsPath}`);
+        log(`[Delete] Clearing ${file.fsPath}`);
         ameba.clear(file);
       }
     })
@@ -226,22 +216,18 @@ function executeAmebaOnWorkspace(ameba: Ameba | null) {
       if (isValidCrystalDocument(doc)) {
         if (isDocumentVirtual(doc)) {
           if (ameba.config.trigger === LintTrigger.Type) {
-            outputChannel.appendLine(
-              `[Workspace] Running ameba on ${getRelativePath(doc)}`
-            );
+            log(`[Workspace] Running ameba on ${getRelativePath(doc)}`);
             ameba.execute(doc, true);
           }
         } else {
-          outputChannel.appendLine(
-            `[Workspace] Running ameba on ${getRelativePath(doc)}`
-          );
+          log(`[Workspace] Running ameba on ${getRelativePath(doc)}`);
           ameba.execute(doc);
         }
       }
     }
   } else if (workspace.workspaceFolders) {
     for (const folder of workspace.workspaceFolders) {
-      outputChannel.appendLine(`[Workspace] Running ameba on ${folder.name}`);
+      log(`[Workspace] Running ameba on ${folder.name}`);
       ameba.execute(folder);
     }
   }

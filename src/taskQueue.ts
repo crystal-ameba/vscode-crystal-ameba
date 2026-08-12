@@ -1,6 +1,6 @@
 import { Uri } from 'vscode';
 
-import { outputChannel } from './extension';
+import { log } from './extension';
 import { Task } from './task';
 
 /**
@@ -48,7 +48,7 @@ export class TaskQueue {
 
     while (true) {
       let task: Task | undefined = this.tasks[0];
-      outputChannel.appendLine(`[Task] ${this.tasks.length} tasks in queue`);
+      log(`[Task] ${this.tasks.length} tasks in queue`);
 
       if (!task) {
         this.busy = false;
