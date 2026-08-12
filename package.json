@@ -18,7 +18,8 @@
     "Linters"
   ],
   "activationEvents": [
-    "onLanguage:crystal"
+    "onLanguage:crystal",
+    "onLanguage:html.ecr"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -27,6 +28,12 @@
         "id": "crystal",
         "extensions": [
           ".cr"
+        ]
+      },
+      {
+        "id": "html.ecr",
+        "extensions": [
+          ".ecr"
         ]
       }
     ],
