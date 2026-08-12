@@ -25,10 +25,13 @@ export enum LintScope {
 }
 
 export function getConfig(): AmebaConfig {
+  const configFileName = '.ameba.yml';
   let command = 'ameba';
+
   const root = workspace.workspaceFolders || [];
   if (root.length) {
-    const localAmebaPath = path.join(root[0].uri.fsPath, 'bin', 'ameba');
+    const localAmebaPath = path.join(root[0].uri.fsPath, 'bin', command);
+
     if (existsSync(localAmebaPath)) {
       log(`[Config] Using local ameba at ${localAmebaPath}`);
       command = localAmebaPath;
@@ -57,8 +60,8 @@ export function getConfig(): AmebaConfig {
 
   return {
     command,
-    configFileName: '.ameba.yml',
-    trigger: trigger,
-    scope: scope,
+    configFileName,
+    trigger,
+    scope,
   };
 }

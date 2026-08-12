@@ -10,17 +10,18 @@ import { Task } from './task';
  */
 export class TaskQueue {
   private tasks: Task[] = [];
-  private busy: boolean = false;
+  private busy = false;
 
   public get length(): number {
     return this.tasks.length;
   }
 
   public enqueue(task: Task): void {
-    if (task.isEnqueued)
+    if (task.isEnqueued) {
       throw new Error(`Task is already enqueued (uri: ${task.uri})`);
-
+    }
     this.cancel(task.uri);
+
     task.isEnqueued = true;
     this.tasks.push(task);
     this.kick();
@@ -43,13 +44,15 @@ export class TaskQueue {
   }
 
   private async kick(): Promise<void> {
-    if (this.busy) return;
+    if (this.busy) {
+      return;
+    }
     this.busy = true;
 
     while (true) {
-      let task: Task | undefined = this.tasks[0];
       log(`[Task] ${this.tasks.length} tasks in queue`);
 
+      let task: Task | undefined = this.tasks[0];
       if (!task) {
         this.busy = false;
         return;

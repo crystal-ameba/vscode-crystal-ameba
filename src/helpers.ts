@@ -3,6 +3,7 @@ import { TextDocument, Uri, workspace, WorkspaceFolder } from 'vscode';
 
 export function noWorkspaceFolder(uri: Uri): WorkspaceFolder {
   const firstWorkspaceFolder = workspace.workspaceFolders?.[0];
+
   if (uri.scheme === 'untitled' && firstWorkspaceFolder) {
     return firstWorkspaceFolder;
   }
@@ -22,13 +23,14 @@ export function getRelativePath(document: TextDocument): string {
   const space: WorkspaceFolder =
     workspace.getWorkspaceFolder(document.uri) ??
     noWorkspaceFolder(document.uri);
+
   return path.relative(space.uri.fsPath, document.uri.fsPath);
 }
 
-export function isValidCrystalDocument(doc: TextDocument): boolean {
+export function isValidCrystalDocument(document: TextDocument): boolean {
   return (
-    ['crystal', 'html.ecr'].includes(doc.languageId) &&
-    ['file', 'untitled'].includes(doc.uri.scheme)
+    ['crystal', 'html.ecr'].includes(document.languageId) &&
+    ['file', 'untitled'].includes(document.uri.scheme)
   );
 }
 

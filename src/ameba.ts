@@ -27,10 +27,17 @@ import {
   noWorkspaceFolder,
 } from './helpers';
 
+const virtualDocumentDisabledRules = [
+  'Lint/Formatting',
+  'Layout/TrailingBlankLines',
+  'Layout/TrailingWhitespace',
+];
+
 export class Ameba {
+  public config: AmebaConfig;
+
   private diag: DiagnosticCollection;
   private taskQueue: TaskQueue;
-  public config: AmebaConfig;
 
   constructor(diagnostics: DiagnosticCollection) {
     this.diag = diagnostics;
@@ -40,7 +47,7 @@ export class Ameba {
 
   public execute(
     document: TextDocument | WorkspaceFolder,
-    virtual: boolean = false
+    virtual = false
   ): void {
     if (!isTextDocument(document)) {
       virtual = false;
@@ -56,17 +63,17 @@ export class Ameba {
 
     const args = [this.config.command, '--format', 'json'];
     const configFile = path.join(dir, this.config.configFileName);
-    if (existsSync(configFile)) args.push('--config', configFile);
+
+    if (existsSync(configFile)) {
+      args.push('--config', configFile);
+    }
 
     if (isTextDocument(document)) {
       if (!virtual) {
         args.push(document.fileName);
       } else {
         // Disabling these as they're common when typing
-        args.push(
-          '--except',
-          'Lint/Formatting,Layout/TrailingBlankLines,Layout/TrailingWhitespace'
-        );
+        args.push('--except', virtualDocumentDisabledRules.join(','));
 
         // Indicate that the source is passed through STDIN
         if (document.uri.scheme === 'untitled') {
@@ -88,6 +95,7 @@ export class Ameba {
 
         if (virtual && isTextDocument(document)) {
           const documentText: string = document.getText();
+
           proc.stdin.write(documentText);
           proc.stdin.end();
         }
@@ -173,8 +181,9 @@ export class Ameba {
             : amebaVersion.toString();
 
           for (const source of results.sources) {
-            if (!source.issues.length) continue;
-
+            if (!source.issues.length) {
+              continue;
+            }
             let parsed: Diagnostic[] = [];
 
             for (const issue of source.issues) {
@@ -238,6 +247,16 @@ export class Ameba {
     this.taskQueue.enqueue(task);
   }
 
+  public clear(uri: Uri | null = null): void {
+    if (uri) {
+      this.taskQueue.cancel(uri);
+      this.diag.delete(uri);
+    } else {
+      this.taskQueue.clear();
+      this.diag.clear();
+    }
+  }
+
   private parseSeverity(severity: string): DiagnosticSeverity {
     switch (severity) {
       case 'Error':
@@ -248,16 +267,6 @@ export class Ameba {
         return DiagnosticSeverity.Information;
       default:
         return DiagnosticSeverity.Hint;
-    }
-  }
-
-  public clear(uri: Uri | null = null): void {
-    if (uri) {
-      this.taskQueue.cancel(uri);
-      this.diag.delete(uri);
-    } else {
-      this.taskQueue.clear();
-      this.diag.clear();
     }
   }
 }

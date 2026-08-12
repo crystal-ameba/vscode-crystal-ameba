@@ -6,7 +6,8 @@ import { CancellationToken, CancellationTokenSource, Uri } from 'vscode';
  */
 export class Task {
   public readonly uri: Uri;
-  public isEnqueued: boolean = false;
+  public isEnqueued = false;
+
   private body: (token: CancellationToken) => Promise<void>;
   private cancelTokenSource: CancellationTokenSource =
     new CancellationTokenSource();
@@ -14,7 +15,7 @@ export class Task {
 
   /**
    * @param body Function of task body, which returns callback called
-   *             when cancelation is requested. You should call
+   *             when cancellation is requested. You should call
    *             token.finished() after async operation is done.
    */
   constructor(uri: Uri, body: (token: CancellationToken) => Promise<void>) {
@@ -23,8 +24,9 @@ export class Task {
   }
 
   public async run(): Promise<void> {
-    if (this.cancelToken.isCancellationRequested) return Promise.resolve();
-
+    if (this.cancelToken.isCancellationRequested) {
+      return Promise.resolve();
+    }
     const task = this;
     return await task.body(this.cancelToken);
   }

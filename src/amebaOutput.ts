@@ -1,11 +1,9 @@
-// output of Ameba JSON format
-
-interface AmebaSummary {
+export interface AmebaSummary {
   issues_count: number;
   target_sources_count: number;
 }
 
-interface AmebaLocation {
+export interface AmebaLocation {
   line: number;
   column: number;
 }
@@ -23,7 +21,7 @@ export interface AmebaFile {
   issues: Array<AmebaIssue>;
 }
 
-interface AmebaMetadata {
+export interface AmebaMetadata {
   ameba_version: string;
   crystal_version: string;
 }
