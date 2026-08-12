@@ -55,7 +55,7 @@ export function activate(context: ExtensionContext) {
                 ameba.execute(editor.document);
               }
             },
-            (_) => {}
+            () => {}
           );
       }
     })
@@ -78,7 +78,7 @@ export function activate(context: ExtensionContext) {
               ameba = new Ameba(diag);
               executeAmebaOnWorkspace(ameba);
             },
-            (_) => {}
+            () => {}
           );
       }
     })
@@ -113,7 +113,7 @@ export function activate(context: ExtensionContext) {
   );
 
   context.subscriptions.push(
-    workspace.onDidChangeConfiguration((_) => {
+    workspace.onDidChangeConfiguration(() => {
       if (!ameba) return;
 
       log(`[Config] Reloading diagnostics after config change`);

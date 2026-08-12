@@ -27,8 +27,7 @@ export class Task {
     if (this.cancelToken.isCancellationRequested) {
       return Promise.resolve();
     }
-    const task = this;
-    return await task.body(this.cancelToken);
+    return await this.body(this.cancelToken);
   }
 
   public cancel(): void {
