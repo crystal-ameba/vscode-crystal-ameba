@@ -37,7 +37,7 @@ export function getConfig(): AmebaConfig {
         }
     }
 
-    const workspaceConfig = workspace.getConfiguration('crystal-ameba');
+    const workspaceConfig = workspace.getConfiguration('crystal-ameba-linter');
     const currentVersion = semver.coerce(execSync(`"${command}" --version`).toString().trim());
 
     const scope = workspaceConfig.get<LintScope>("lint-scope", LintScope.File);
