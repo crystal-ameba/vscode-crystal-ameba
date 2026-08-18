@@ -174,12 +174,12 @@ export class Ameba {
 
                             const diag = new Diagnostic(
                                 range,
-                                `[${issue.rule_name}] ${issue.message}`,
+                                issue.message,
                                 this.parseSeverity(issue.severity)
                             );
 
                             diag.code = {
-                                value: "Docs",
+                                value: issue.rule_name,
                                 target: Uri.parse(`https://crystal-ameba.org/api/${versionForDocs}/Ameba/Rule/${issue.rule_name}.html`),
                             }
 
