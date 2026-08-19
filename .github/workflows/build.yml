@@ -21,3 +21,4 @@ jobs:
       - uses: actions/checkout@v7
       - run: yarn
       - run: yarn run compile
+      - run: yarn run eslint
