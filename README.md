@@ -1,6 +1,6 @@
 # Ameba for Visual Studio Code
 
-This extension provides an interface to [Ameba](https://github.com/crystal-ameba/ameba) for VSCode.
+This extension provides an interface to [Ameba](https://github.com/crystal-ameba/ameba) for VS Code.
 
 ![](/assets/demo1.png)
 ![](/assets/demo2.png)
@@ -8,10 +8,10 @@ This extension provides an interface to [Ameba](https://github.com/crystal-ameba
 
 ## Installation
 
-* Install [Ameba](https://github.com/crystal-ameba/ameba#installation)
-* Type F1 (or Command + Shift + P)
-* execute "Extensions: install extension"
-* type `crystal-ameba` and install
+- Install [Ameba](https://github.com/crystal-ameba/ameba#installation)
+- Type F1 (or Command + Shift + P)
+- execute "Extensions: install extension"
+- type `crystal-ameba` and install
 
 ## Releasing a new version
 
