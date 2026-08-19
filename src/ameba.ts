@@ -87,8 +87,8 @@ export class Ameba {
 
     const task = new Task(document.uri, (token) => {
       return new Promise((resolve, reject) => {
-        let stdoutArr: string[] = [];
-        let stderrArr: string[] = [];
+        const stdoutArr: string[] = [];
+        const stderrArr: string[] = [];
 
         log(`$ ${args.join(' ')}`);
         const proc = spawn(args[0], args.slice(1), { cwd: dir });
@@ -100,7 +100,7 @@ export class Ameba {
           proc.stdin.end();
         }
 
-        token.onCancellationRequested((_) => {
+        token.onCancellationRequested(() => {
           proc.kill();
         });
 
@@ -140,7 +140,7 @@ export class Ameba {
                 .then(
                   (disable) =>
                     disable && commands.executeCommand('crystal.ameba.disable'),
-                  (_) => {}
+                  () => {}
                 );
             } else {
               window.showErrorMessage(stderr);
@@ -184,10 +184,10 @@ export class Ameba {
             if (!source.issues.length) {
               continue;
             }
-            let parsed: Diagnostic[] = [];
+            const parsed: Diagnostic[] = [];
 
             for (const issue of source.issues) {
-              let start = issue.location;
+              const start = issue.location;
               let end = issue.end_location;
 
               if (!end.line || !end.column) {

@@ -52,7 +52,7 @@ export class TaskQueue {
     while (true) {
       log(`[Task] ${this.tasks.length} tasks in queue`);
 
-      let task: Task | undefined = this.tasks[0];
+      const task: Task | undefined = this.tasks[0];
       if (!task) {
         this.busy = false;
         return;
