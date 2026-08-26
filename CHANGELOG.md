@@ -1,3 +1,34 @@
+## [0.4.0]
+
+* v0.3.3 by @nobodywasishere in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/208
+* Fix wrong severity value in `Ameba.parseSeverity` by @Sija in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/209
+* Synchronize severities with `ameba-ls` by @Sija in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/210
+* Fix: use `Uri.file` instead of `Uri.parse` by @Sija in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/239
+* Fix documentation urls for Ameba development versions by @Sija in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/238
+* Potential fixes for 3 code quality findings by @Sija in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/240
+* Lint ECR files by @nobodywasishere in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/249
+* build(deps): bump actions/checkout from 6 to 7 by @dependabot[bot] in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/256
+* Display issue rule name as diagnostic code by @Sija in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/253
+* Misc refactors by @Sija in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/254
+* Replace TSLint with ESLint by @Sija in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/258
+
+### Dependabot
+
+* build(deps-dev): bump @types/node from 25.0.3 to 25.0.6 by @dependabot[bot] in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/211
+* build(deps-dev): bump @types/node from 25.0.6 to 25.0.9 by @dependabot[bot] in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/212
+* build(deps-dev): bump @types/node from 25.0.9 to 25.0.10 by @dependabot[bot] in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/213
+* build(deps): bump minimatch from 3.1.2 to 3.1.5 by @dependabot[bot] in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/220
+* build(deps): bump semver from 7.7.3 to 7.7.4 by @dependabot[bot] in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/216
+* build(deps): bump semver from 7.7.4 to 7.8.0 by @dependabot[bot] in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/229
+* build(deps): bump semver from 7.8.0 to 7.8.1 by @dependabot[bot] in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/233
+* build(deps): bump semver from 7.8.1 to 7.8.2 by @dependabot[bot] in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/235
+* build(deps): bump semver from 7.8.2 to 7.8.4 by @dependabot[bot] in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/237
+* build(deps): bump semver from 7.8.4 to 7.8.5 by @dependabot[bot] in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/242
+* build(deps): bump brace-expansion from 1.1.11 to 1.1.16 by @dependabot[bot] in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/247
+* build(deps): bump js-yaml from 3.14.2 to 3.15.0 by @dependabot[bot] in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/248
+* build(deps): bump js-yaml from 3.15.0 to 3.15.1 by @dependabot[bot] in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/252
+* build(deps-dev): bump @types/semver from 7.7.1 to 7.8.0 by @dependabot[bot] in https://github.com/crystal-ameba/vscode-crystal-ameba/pull/251
+
 ## [0.3.2] (2026-01-04)
 
 * Now under the `crystal-ameba` namespace
